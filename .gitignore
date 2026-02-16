@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+node_modules/
+.env
+*.ex5
+*.dll
+bin/
+obj/
+.venv/
