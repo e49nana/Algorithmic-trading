@@ -316,8 +316,8 @@ namespace NinjaTrader.NinjaScript.Indicators
                 AddPlot(Brushes.Orange, "MSBPlot");
 				
 				// Paramètres Telegram secondaires (pour alertes spéciales confluence)
-				SecondaryTelegramBotToken = "8148620113:AAGSysjSL2VWGo-B_AcM97deVJUTvIC1jmo";
-				SecondaryTelegramChatID = "7138060180";
+				SecondaryTelegramBotToken = "";
+				SecondaryTelegramChatID = "";
 				
 				AfficherDashboard = true;
             }
@@ -1447,3 +1447,4 @@ namespace NinjaTrader.NinjaScript.Strategies
 }
 
 #endregion
+
