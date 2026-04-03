@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { margin: 0; padding: 0; background: #000; }
+  .banner {
+    width: 1200px;
+    height: 600px;
+    background: #070b14;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* Neural network background visualization */
+  .nn-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.12;
+  }
+  .nn-bg svg { width: 100%; height: 100%; }
+
+  /* Grid overlay */
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Glow effects */
+  .glow-1 {
+    position: absolute;
+    width: 500px; height: 500px;
+    top: -100px; right: -50px;
+    background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+  }
+  .glow-2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    bottom: -100px; left: -50px;
+    background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+  }
+
+  /* Content */
+  .content {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    padding: 0;
+  }
+
+  /* Left panel */
+  .left {
+    flex: 1;
+    padding: 48px 0 48px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.2);
+    padding: 6px 14px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+    width: fit-content;
+  }
+
+  .title {
+    font-size: 46px;
+    font-weight: 800;
+    color: #f0f4f8;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .title span { color: #f59e0b; }
+
+  .subtitle {
+    font-size: 17px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin-bottom: 28px;
+    max-width: 420px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f59e0b;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  .tag-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 28px;
+  }
+  .tag {
+    font-size: 10px;
+    font-weight: 600;
+    color: #cbd5e1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 5px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Right panel — code preview */
+  .right {
+    width: 460px;
+    padding: 48px 56px 48px 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  .code-block {
+    background: #0d1321;
+    border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 10px;
+    padding: 24px 28px;
+    width: 100%;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .code-header {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .code-block .kw { color: #c084fc; }
+  .code-block .fn { color: #60a5fa; }
+  .code-block .tp { color: #34d399; }
+  .code-block .num { color: #f59e0b; }
+  .code-block .cm { color: #475569; }
+  .code-block .str { color: #fbbf24; }
+  .code-block .var { color: #e2e8f0; }
+
+  /* Brand footer */
+  .brand-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 44px;
+    background: rgba(0,0,0,0.4);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 56px;
+    z-index: 20;
+  }
+  .brand-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .brand-name span { color: #f59e0b; }
+  .brand-free {
+    font-size: 11px;
+    font-weight: 700;
+    color: #10b981;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- Neural net nodes background -->
+  <div class="nn-bg">
+    <svg viewBox="0 0 1200 600">
+      <!-- Input layer -->
+      <circle cx="900" cy="80" r="6" fill="#f59e0b"/>
+      <circle cx="900" cy="160" r="6" fill="#f59e0b"/>
+      <circle cx="900" cy="240" r="6" fill="#f59e0b"/>
+      <circle cx="900" cy="320" r="6" fill="#f59e0b"/>
+      <circle cx="900" cy="400" r="6" fill="#f59e0b"/>
+      <circle cx="900" cy="480" r="6" fill="#f59e0b"/>
+      <!-- Hidden 1 -->
+      <circle cx="1020" cy="120" r="5" fill="#3b82f6"/>
+      <circle cx="1020" cy="200" r="5" fill="#3b82f6"/>
+      <circle cx="1020" cy="280" r="5" fill="#3b82f6"/>
+      <circle cx="1020" cy="360" r="5" fill="#3b82f6"/>
+      <circle cx="1020" cy="440" r="5" fill="#3b82f6"/>
+      <!-- Hidden 2 -->
+      <circle cx="1100" cy="180" r="4" fill="#8b5cf6"/>
+      <circle cx="1100" cy="280" r="4" fill="#8b5cf6"/>
+      <circle cx="1100" cy="380" r="4" fill="#8b5cf6"/>
+      <!-- Output -->
+      <circle cx="1170" cy="220" r="7" fill="#10b981"/>
+      <circle cx="1170" cy="300" r="7" fill="#10b981"/>
+      <circle cx="1170" cy="380" r="7" fill="#10b981"/>
+      <!-- Connections (sampled) -->
+      <line x1="900" y1="80" x2="1020" y2="120" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+      <line x1="900" y1="80" x2="1020" y2="200" stroke="#f59e0b" stroke-width="0.5" opacity="0.2"/>
+      <line x1="900" y1="160" x2="1020" y2="120" stroke="#f59e0b" stroke-width="0.5" opacity="0.2"/>
+      <line x1="900" y1="160" x2="1020" y2="280" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+      <line x1="900" y1="240" x2="1020" y2="200" stroke="#f59e0b" stroke-width="0.5" opacity="0.2"/>
+      <line x1="900" y1="240" x2="1020" y2="360" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+      <line x1="900" y1="320" x2="1020" y2="280" stroke="#f59e0b" stroke-width="0.5" opacity="0.2"/>
+      <line x1="900" y1="320" x2="1020" y2="440" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+      <line x1="900" y1="400" x2="1020" y2="360" stroke="#f59e0b" stroke-width="0.5" opacity="0.2"/>
+      <line x1="900" y1="480" x2="1020" y2="440" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1020" y1="120" x2="1100" y2="180" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1020" y1="200" x2="1100" y2="280" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1020" y1="280" x2="1100" y2="180" stroke="#3b82f6" stroke-width="0.5" opacity="0.2"/>
+      <line x1="1020" y1="360" x2="1100" y2="280" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1020" y1="440" x2="1100" y2="380" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1100" y1="180" x2="1170" y2="220" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1100" y1="280" x2="1170" y2="300" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1100" y1="380" x2="1170" y2="380" stroke="#8b5cf6" stroke-width="0.5" opacity="0.3"/>
+      <line x1="1100" y1="180" x2="1170" y2="300" stroke="#8b5cf6" stroke-width="0.5" opacity="0.15"/>
+      <line x1="1100" y1="280" x2="1170" y2="380" stroke="#8b5cf6" stroke-width="0.5" opacity="0.15"/>
+    </svg>
+  </div>
+
+  <div class="content">
+    <div class="left">
+      <div class="badge">Free &amp; Open Source</div>
+      <div class="title">ASQ <span>NeuralNet</span></div>
+      <div class="subtitle">
+        Complete deep learning library in pure MQL5.<br>
+        Build, train &amp; deploy neural networks<br>
+        natively inside MetaTrader 5.
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-num">3,053</div>
+          <div class="stat-label">Lines of Code</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">13</div>
+          <div class="stat-label">Activations</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">0</div>
+          <div class="stat-label">Dependencies</div>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <div class="tag">Pure MQL5</div>
+        <div class="tag">No DLLs</div>
+        <div class="tag">Adam / AdamW</div>
+        <div class="tag">Backpropagation</div>
+        <div class="tag">Dropout</div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="code-block">
+        <div class="code-header">Quick Start — 6 Lines</div>
+        <span class="tp">CNeuralNetwork</span> <span class="var">net</span>;<br>
+        <span class="var">net</span>.<span class="fn">Init</span>(<span class="num">32</span>);<br>
+        <span class="var">net</span>.<span class="fn">AddLayer</span>(<span class="num">64</span>, <span class="str">ACT_RELU</span>);<br>
+        <span class="var">net</span>.<span class="fn">AddLayer</span>(<span class="num">32</span>, <span class="str">ACT_RELU</span>, <span class="num">0.2</span>);<br>
+        <span class="var">net</span>.<span class="fn">AddLayer</span>(<span class="num">3</span>, <span class="str">ACT_SOFTMAX</span>);<br>
+        <span class="var">net</span>.<span class="fn">Build</span>();<br>
+        <br>
+        <span class="cm">// Train</span><br>
+        <span class="var">net</span>.<span class="fn">SetOptimizer</span>(<span class="str">OPT_ADAM</span>, <span class="num">0.001</span>);<br>
+        <span class="var">net</span>.<span class="fn">Fit</span>(X, Y, <span class="num">100</span>, <span class="num">32</span>);<br>
+        <br>
+        <span class="cm">// Predict</span><br>
+        <span class="kw">int</span> <span class="var">action</span> = <span class="var">net</span>.<span class="fn">PredictClass</span>(features);
+      </div>
+    </div>
+  </div>
+
+  <div class="brand-bar">
+    <div class="brand-name"><span>AlgoSphere</span> Quant — robin2.0</div>
+    <div class="brand-free">★ FREE ON MQL5 MARKET ★</div>
+  </div>
+</div>
+</body>
+</html>
