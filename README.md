@@ -31,6 +31,21 @@ This repository brings together my algorithmic trading work across **two worlds*
 
 ---
 
+---
+
+## 🛢️ Spotlight — Djibril AI
+
+> **My most advanced open-source system:** AI-powered crude oil trading based on
+> real-time geopolitical analysis.
+
+Claude API scores Iran/Middle East tensions (-10 to +10), a composite engine blends
+geo + technical + sentiment signals, Kelly sizing computes position size, and a
+MetaTrader 5 EA executes WTI/Brent trades — with a real-time React dashboard on top.
+
+**FastAPI · React/TypeScript · MQL5 · Docker · 98 tests**
+
+➡️ **[e49nana/Djibril-AI](https://github.com/e49nana/Djibril-AI)**
+
 ## 📂 Repository Structure
 
 ```
