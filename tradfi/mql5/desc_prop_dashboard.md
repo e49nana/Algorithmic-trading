@@ -1,11 +1,11 @@
-# ExMachina Prop Dashboard
+# ASQ Prop Dashboard
 
 ## Short Description (for MQL5 Code Base summary)
 Real-time prop firm rule tracker: daily drawdown, max drawdown, profit target progress, trading days count, and challenge status with visual progress bars. Presets for FTMO, MyFundedFX, E8, TFT, and Bulenox. Pure indicator — no trade interference.
 
 ## Full Description (for MQL5 Code Base page)
 
-### ExMachina Prop Dashboard — Never Lose a Funded Account to Math
+### ASQ Prop Dashboard — Never Lose a Funded Account to Math
 
 **Precision before profit.**
 
@@ -134,4 +134,4 @@ The dashboard shows an overall challenge status:
 - Netting and Hedging accounts
 
 ---
-*ExMachina Trading Systems — Precision before profit.*
+*AlgoSphere Quant — Precision before profit.*
