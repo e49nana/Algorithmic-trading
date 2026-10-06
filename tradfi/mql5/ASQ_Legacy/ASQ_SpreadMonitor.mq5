@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                    ExMachina_SpreadMonitor.mq5    |
-//|                        Copyright 2026, ExMachina Trading Systems  |
+//|                                    ASQ_SpreadMonitor.mq5    |
+//|                        Copyright 2026, AlgoSphere Quant  |
 //|                        https://www.mql5.com/en/users/algosphere   |
 //+------------------------------------------------------------------+
-#property copyright   "Copyright 2026, ExMachina Trading Systems"
+#property copyright   "Copyright 2026, AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/algosphere"
 #property version     "1.00"
 #property description "Real-time spread monitor with color-coded histogram and on-chart display."
@@ -60,7 +60,7 @@ int OnInit()
    ArraySetAsSeries(g_lowBuffer,    true);
 
 //--- indicator name
-   IndicatorSetString(INDICATOR_SHORTNAME, "ExMachina Spread Monitor");
+   IndicatorSetString(INDICATOR_SHORTNAME, "ASQ Spread Monitor");
    IndicatorSetInteger(INDICATOR_DIGITS, 0);
 
 //--- levels

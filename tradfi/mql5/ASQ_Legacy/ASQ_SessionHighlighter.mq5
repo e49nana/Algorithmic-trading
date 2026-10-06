@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                ExMachina_SessionHighlighter.mq5   |
-//|                        Copyright 2026, ExMachina Trading Systems  |
+//|                                ASQ_SessionHighlighter.mq5   |
+//|                        Copyright 2026, AlgoSphere Quant  |
 //|                        https://www.mql5.com/en/users/algosphere   |
 //+------------------------------------------------------------------+
-#property copyright   "Copyright 2026, ExMachina Trading Systems"
+#property copyright   "Copyright 2026, AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/algosphere"
 #property version     "1.00"
 #property description "Highlights Asian, London, and New York trading sessions"
@@ -67,7 +67,7 @@ enum ENUM_SESSION
 //+------------------------------------------------------------------+
 int OnInit()
   {
-   IndicatorSetString(INDICATOR_SHORTNAME, "ExMachina Sessions");
+   IndicatorSetString(INDICATOR_SHORTNAME, "ASQ Sessions");
    return(INIT_SUCCEEDED);
   }
 

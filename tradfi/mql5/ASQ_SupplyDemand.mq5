@@ -1,12 +1,12 @@
 //+------------------------------------------------------------------+
-//|                                  ExMachina_SupplyDemand.mq5      |
-//|                     Copyright 2026, ExMachina Trading Systems     |
+//|                                  ASQ_SupplyDemand.mq5      |
+//|                     Copyright 2026, AlgoSphere Quant     |
 //|              https://www.mql5.com/en/users/williammukam           |
 //+------------------------------------------------------------------+
-#property copyright   "Copyright 2026, ExMachina Trading Systems"
+#property copyright   "Copyright 2026, AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/williammukam"
 #property version     "2.00"
-#property description "ExMachina Supply & Demand Zones v2.0"
+#property description "ASQ Supply & Demand Zones v2.0"
 #property description "Impulse-based detection with ATR filter,"
 #property description "strength rating, freshness + touch tracking,"
 #property description "zone proximity alerts, premium dashboard."
@@ -40,7 +40,7 @@ input bool      InpExtendRight    = true;              // Extend zones to curren
 input bool      InpShowMidline    = true;              // Show zone midline (EQ)
 
 input group              "══════ CHART THEME ══════"
-input bool      InpApplyTheme     = true;              // Apply ExMachina dark theme
+input bool      InpApplyTheme     = true;              // Apply ASQ dark theme
 input color     InpChartBg        = C'10,12,20';       // Chart background
 input color     InpChartFg        = C'25,28,40';       // Chart foreground (candle area)
 input color     InpChartGrid      = C'20,22,32';       // Grid color
@@ -72,7 +72,7 @@ input color     InpDashHeaderColor= C'90,180,220';    // Dashboard header
 //| Constants                                                         |
 //+------------------------------------------------------------------+
 const string OBJ_PREFIX   = "EXSD_";
-const string INDI_NAME    = "ExMachina S&D Zones";
+const string INDI_NAME    = "ASQ S&D Zones";
 
 //+------------------------------------------------------------------+
 //| Zone structure                                                    |
@@ -113,7 +113,7 @@ int OnInit()
   {
    IndicatorSetString(INDICATOR_SHORTNAME, INDI_NAME);
 
-   //--- apply ExMachina chart theme
+   //--- apply ASQ chart theme
    if(InpApplyTheme)
       ApplyChartTheme();
 
@@ -136,7 +136,7 @@ int OnInit()
   }
 
 //+------------------------------------------------------------------+
-//| Apply ExMachina dark chart theme                                  |
+//| Apply ASQ dark chart theme                                  |
 //+------------------------------------------------------------------+
 void ApplyChartTheme()
   {
@@ -167,7 +167,7 @@ void ApplyChartTheme()
    ChartSetInteger(chartId, CHART_SHOW_BID_LINE, false);
 
    ChartRedraw(chartId);
-   PrintFormat("%s: ExMachina chart theme applied", INDI_NAME);
+   PrintFormat("%s: ASQ chart theme applied", INDI_NAME);
   }
 
 //+------------------------------------------------------------------+
@@ -776,7 +776,7 @@ void CreateDashboard()
 
    //--- branding
    CreateLabel(OBJ_PREFIX + "DASH_Brand", x + pad, y,
-               "ExMachina Trading Systems", C'50,55,70', fs - 2);
+               "AlgoSphere Quant", C'50,55,70', fs - 2);
    y += lineH + 2;
 
    //--- resize backgrounds to fit content

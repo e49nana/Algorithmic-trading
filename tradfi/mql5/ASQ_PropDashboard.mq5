@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                  ExMachina_PropDashboard.mq5     |
-//|                        Copyright 2026, ExMachina Trading Systems  |
+//|                                  ASQ_PropDashboard.mq5     |
+//|                        Copyright 2026, AlgoSphere Quant  |
 //|                        https://www.mql5.com/en/users/algosphere   |
 //+------------------------------------------------------------------+
-#property copyright   "Copyright 2026, ExMachina Trading Systems"
+#property copyright   "Copyright 2026, AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/algosphere"
 #property version     "1.00"
 #property description "Prop Firm Dashboard: track daily drawdown, max drawdown,"
@@ -134,8 +134,8 @@ int OnInit()
 
    CreatePanel();
 
-   IndicatorSetString(INDICATOR_SHORTNAME, "ExMachina Prop Dashboard");
-   PrintFormat("ExMachina Prop Dashboard initialized. Start balance: %.2f", g_startBalance);
+   IndicatorSetString(INDICATOR_SHORTNAME, "ASQ Prop Dashboard");
+   PrintFormat("ASQ Prop Dashboard initialized. Start balance: %.2f", g_startBalance);
 
    return(INIT_SUCCEEDED);
   }
@@ -551,7 +551,7 @@ void CreatePanel()
    y += lineH + gap;
 
    //--- branding
-   MakeLabel(OBJ_PREFIX + "Brand", x, y, "ExMachina Trading Systems", C'50,55,70', InpFontSize - 2);
+   MakeLabel(OBJ_PREFIX + "Brand", x, y, "AlgoSphere Quant", C'50,55,70', InpFontSize - 2);
    y += lineH;
 
    //--- resize background

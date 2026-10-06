@@ -1,9 +1,9 @@
 //+------------------------------------------------------------------+
-//|                                      ExMachina_TradePilot.mq5    |
-//|                        Copyright 2026, ExMachina Trading Systems  |
+//|                                      ASQ_TradePilot.mq5    |
+//|                        Copyright 2026, AlgoSphere Quant  |
 //|                        https://www.mql5.com/en/users/algosphere   |
 //+------------------------------------------------------------------+
-#property copyright   "Copyright 2026, ExMachina Trading Systems"
+#property copyright   "Copyright 2026, AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/algosphere"
 #property version     "1.00"
 #property description "Professional order management panel: one-click trading,"
@@ -93,7 +93,7 @@ input string    InpComment           = "EXTP"; // Order comment prefix
 //| Constants                                                         |
 //+------------------------------------------------------------------+
 const string OBJ_PREFIX = "EXTP_";
-const string EA_NAME    = "ExMachina Trade Pilot";
+const string EA_NAME    = "ASQ Trade Pilot";
 
 //--- button names
 const string BTN_BUY        = OBJ_PREFIX + "BtnBuy";
@@ -869,7 +869,7 @@ void CreatePanel()
    CreateLabel(OBJ_PREFIX + "InfoTrail",   x, y, "Trail: —", InpTextColor, InpFontSize); y += lineH + 4;
 
    //--- branding
-   CreateLabel(OBJ_PREFIX + "Brand", x, y, "ExMachina Trading Systems", C'50,55,70', InpFontSize - 2);
+   CreateLabel(OBJ_PREFIX + "Brand", x, y, "AlgoSphere Quant", C'50,55,70', InpFontSize - 2);
 
    //--- resize bg
    ObjectSetInteger(0, OBJ_PREFIX + "PanelBG", OBJPROP_YSIZE, y - InpPanelY + lineH + 12);
