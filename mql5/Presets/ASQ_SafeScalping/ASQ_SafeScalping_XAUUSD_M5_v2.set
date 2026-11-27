@@ -1,0 +1,84 @@
+; ASQ Safe Scalping v1.10 — XAUUSD M5 Optimized Preset v2
+; AlgoSphere Quant | https://www.mql5.com/en/users/robin2.0
+; Grid-optimized via Monte Carlo (500 runs, Sharpe 1.27, 79% profitable)
+; Score function: Sharpe * sqrt(profitable%) — rewards quality + consistency
+; Date: 2026-03-29
+
+; ====== GENERAL ======
+InpMagicNumber=202503||202503||1||202503||0
+InpTradeComment=ASQv1
+InpMaxSlippage=10||10||1||20||0
+InpLogLevel=1||1||0||3||0
+
+; ====== RISK MANAGEMENT ======
+InpLotMode=1||0||0||1||0
+InpFixedLots=0.01||0.01||0.01||1.0||0
+InpRiskPercent=0.5||0.3||0.1||1.0||1
+InpMaxDrawdownPct=8.0||5.0||1.0||15.0||1
+InpMaxDayTrades=4||3||1||6||1
+
+; ====== STOP LOSS & TAKE PROFIT ======
+InpStopLoss=300||250||25||400||1
+InpTakeProfit=450||350||25||550||1
+InpUseBreakeven=1||0||0||1||0
+InpBreakevenStart=150||100||25||200||1
+InpBreakevenOffset=20||10||5||30||0
+
+; ====== TRAILING STOP ======
+InpUseTrailing=1||0||0||1||0
+InpTrailStart=200||150||25||280||1
+InpTrailStep=100||60||10||140||1
+
+; ====== PARTIAL CLOSE ======
+InpUsePartialClose=1||0||0||1||0
+InpTP1Points=200||150||25||280||1
+InpTP1ClosePercent=50.0||30.0||10.0||70.0||1
+
+; ====== EMA TREND FILTER ======
+InpEmaFast=50||20||10||80||1
+InpEmaSlow=200||120||20||300||1
+InpTrendStrength=1||0||0||2||0
+
+; ====== MTF CONFIRMATION ======
+InpUseMTF=1||0||0||1||0
+InpMTFTimeframe=16385||16385||0||16385||0
+InpMTFEmaFast=20||10||5||40||1
+InpMTFEmaSlow=50||30||10||80||1
+
+; ====== RSI FILTER ======
+InpRsiPeriod=14||7||1||21||1
+InpRsiBuyMin=45.0||35.0||5.0||50.0||1
+InpRsiBuyMax=65.0||60.0||5.0||75.0||1
+InpRsiSellMin=35.0||25.0||5.0||45.0||1
+InpRsiSellMax=55.0||50.0||5.0||65.0||1
+
+; ====== BREAKOUT DETECTION ======
+InpBreakoutLookback=15||10||5||25||1
+InpBreakoutBuffer=0.3||0.1||0.1||0.6||1
+InpAtrPeriod=50||20||10||80||1
+
+; ====== SESSION FILTER ======
+InpUseSessionFilter=1||0||0||1||0
+InpSessionStartHour=8||7||1||9||1
+InpSessionStartMin=0||0||0||30||0
+InpSessionEndHour=17||15||1||19||1
+InpSessionEndMin=0||0||0||0||0
+InpAvoidFriday=1||0||0||1||0
+InpFridayCutoffHour=14||12||1||16||1
+
+; ====== SPREAD FILTER ======
+InpUseSpreadFilter=1||0||0||1||0
+InpMaxSpread=25||15||5||40||1
+
+; ====== NEWS FILTER ======
+InpUseNewsFilter=1||0||0||1||0
+InpNewsTime1=
+InpNewsTime2=
+InpNewsTime3=
+InpNewsMinsBefore=30||15||5||60||0
+InpNewsMinsAfter=15||10||5||30||0
+
+; ====== DISPLAY ======
+InpShowDashboard=1||0||0||1||0
+InpSyncChartTheme=1||0||0||1||0
+InpShowAnalytics=1||0||0||1||0
