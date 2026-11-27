@@ -2,7 +2,7 @@
 
 ## 📊 Introduction
 
-Position sizing is the foundation of professional trading. Without proper risk management, even the best entry signals become gambling. This document covers the mathematical frameworks used in the **AnaCristina EA** and other professional trading systems.
+Position sizing is the foundation of professional trading. Without proper risk management, even the best entry signals become gambling. This document covers the mathematical frameworks used in the AlgoSphere Quant EAs.
 
 ---
 
@@ -255,8 +255,7 @@ Before every trade, verify:
 ## 🔗 Related Documents
 
 - [02-drawdown-recovery.md](./02-drawdown-recovery.md) - Drawdown recovery strategies
-- [03-correlation-analysis.md](./03-correlation-analysis.md) - Multi-pair correlation
-- [04-monte-carlo.md](./04-monte-carlo.md) - Monte Carlo simulation for risk
+- [03-monte-carlo.md](./03-monte-carlo.md) - Monte Carlo simulation for risk
 
 ---
 

@@ -18,12 +18,12 @@ using NinjaTrader.NinjaScript.DrawingTools;
 // SOPHON SCALPING STRATEGY - EMMANUEL EDITION v2.0
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// SOURCE: 7 Conversations, 90+ Images, +$32,953.70 P&L Documented
+// Patterns and settings taken from manual trading notes. Not a performance claim:
+// backtest and forward-test before any live use.
 //
 // CONFIGURATION EMMANUEL (CONFIRMÉE):
 //   EMA:              19 (6x+ confirmé)
 //   Timeframes:       2m, 3m, 5m, 15m, 30m, 60m
-//   Win Rate Global:  ~85%
 //   Avg Win:          ~$550
 //   Avg Loss:         ~$322
 //

@@ -1,197 +1,207 @@
-<div align="center">
+# Algorithmic Trading — AlgoSphere Quant open-source tools
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:1a1b27,100:0f6b3a&height=180&section=header&text=Algorithmic%20Trading&fontSize=38&fontColor=58a6ff&fontAlignY=35&desc=MetaTrader%205%20%E2%80%A2%20NinjaTrader%208%20%E2%80%A2%20Risk%20tools&descSize=15&descColor=8b949e&descAlignY=55&animation=fadeIn" width="100%"/>
+[![CI](https://github.com/e49nana/algorithmic-trading/actions/workflows/ci.yml/badge.svg)](https://github.com/e49nana/algorithmic-trading/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[![MQL5](https://img.shields.io/badge/MQL5-4A76A8?style=for-the-badge&logo=metatrader5&logoColor=white)](#metatrader-5--mql5)
-[![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white)](#ninjatrader-8--c)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](#risk-management--analytics)
-[![License: MIT](https://img.shields.io/badge/License-MIT-58a6ff?style=for-the-badge)](LICENSE)
+Free trading tools for **MetaTrader 5** and **NinjaTrader 8**: a scalping EA with its presets and Monte Carlo report, prop-firm and risk utilities, reusable MQL5 libraries, Smart Money Concepts indicators for NinjaTrader, and a tested Python Monte Carlo module.
 
-**Trading tools for MetaTrader 5 and NinjaTrader 8 — indicators, risk utilities, Expert Advisors — plus the showcase of my commercial suite, [AlgoSphere Quant](https://algosphere-quant.com).**
+Everything here is the free, open-source side of [AlgoSphere Quant](https://www.mql5.com/en/users/robin2.0). Paid products are sold on the MQL5 Market and their source is not in this repository.
 
-</div>
-
----
-
-## About
-
-Everything in this repository is code I wrote for my own trading and for AlgoSphere Quant customers. The open-source parts are here in full; the commercial products are listed with links to the MQL5 Market, their source stays private.
-
-| | MetaTrader 5 | NinjaTrader 8 |
+| Area | Content | Folder |
 |---|---|---|
-| **Language** | MQL5 | C# (NinjaScript) |
-| **Content** | 11 Expert Advisors / indicators, 12 include libraries, packaged builds | 13 indicators, 4 strategies |
-| **Focus** | Prop-firm risk control, dashboards, scalping systems | Smart Money Concepts, liquidity, mean reversion |
+| MetaTrader 5 | 3 Expert Advisors, 3 example EAs, 3 indicators, 1 script, 10 include libraries, 5 presets | [`mql5/`](mql5) |
+| NinjaTrader 8 | 10 indicators, 5 strategies | [`ninjatrader/`](ninjatrader) |
+| Python | Monte Carlo simulations for trading and risk, 29 tests | [`python/`](python) |
+| Docs | Risk framework, product pages, Monte Carlo report | [`docs/`](docs) |
 
 ---
 
-## Spotlight — Djibril AI
+## Quick start — MetaTrader 5
 
-> **My most advanced open-source system:** AI-powered crude oil trading based on real-time geopolitical analysis. Claude API scores Middle East tensions, a composite engine blends geopolitical, technical and sentiment signals, Kelly sizing computes position size, and a MetaTrader 5 EA executes. FastAPI backend, React/TypeScript dashboard, 98 tests, Docker deployment.
+1. Download the repository (**Code → Download ZIP**) or clone it.
+2. In MetaTrader 5: **File → Open Data Folder**, then open the `MQL5` folder.
+3. Copy the **contents** of this repository's `mql5/` folder into it. `Experts`, `Indicators`, `Scripts`, `Include` and `Presets` merge with the folders already there.
+4. In MetaEditor, compile the programs you want under `Experts/AlgoSphere`, `Indicators/AlgoSphere` and `Scripts/AlgoSphere`.
 
-➡️ **[e49nana/Djibril-AI](https://github.com/e49nana/Djibril-AI)**
+The `mql5/` folder mirrors the terminal's own `MQL5` folder, so every `#include` resolves without editing.
 
 ---
 
-## Repository structure
+## MetaTrader 5 catalogue
+
+### Expert Advisors — `mql5/Experts/AlgoSphere/`
+
+| Program | What it does | Docs |
+|---|---|---|
+| `ASQ_SafeScalping.mq5` | Breakout scalping EA for XAUUSD M5: EMA 50/200 trend, RSI, breakout, optional H1 confirmation, trailing, partial close at TP1, daily trade cap, peak drawdown stop. No martingale, grid or hedging. Uses `Include/ASQSafeScalping/`. | [product page](docs/products/ASQ_SafeScalping.md) · [Monte Carlo report](docs/reports/ASQ_SafeScalping_MonteCarlo_XAUUSD_M5.html) |
+| `ASQ_CommandDesk.mq5` | Command center for manual traders: one-click orders, hotkeys (B/S/X/R), staged multi-TP, adaptive trailing, drawdown guard, live R:R and metrics. | [screenshots](#screenshots) |
+| `ASQ_EquityCurve.mq5` | Live equity and balance curve on the chart: 4 display modes, drawdown, high-water mark, daily P&L, profit factor, streaks. | [screenshot](docs/images/ASQ_EquityCurve_Panel.png) |
+
+**Examples** — `mql5/Experts/AlgoSphere/Examples/`: each one shows how to wire a library into an EA.
+
+| Program | Library shown |
+|---|---|
+| `ASQ_NewsFilter_Demo.mq5` | `ASQ_NewsFilter.mqh` |
+| `ASQ_RecoveryEngine_Demo.mq5` | `ASQ_RecoveryEngine.mqh` |
+| `ASQ_TelegramNotifier_Demo.mq5` | `ASQ_TelegramNotifier.mqh` |
+
+### Indicators — `mql5/Indicators/AlgoSphere/`
+
+| Program | What it does | Docs |
+|---|---|---|
+| `ASQ_PropGuard.mq5` | Prop-firm challenge monitor: daily and maximum drawdown, profit target, trading days, deadline, 7 firm presets. **The auto-close option does not work yet**, see [Known issues](#known-issues). | [product page](docs/products/ASQ_PropGuard.md) |
+| `ASQ_RiskReward.mq5` | Visual trade planner: drag entry/SL/TP lines, live R:R, lot size, up to 3 TPs, risk and reward in account currency. | [product page](docs/products/ASQ_RiskReward.md) |
+| `ASQ_SpreadLogger.mq5` | Live spread histogram, statistics panel, threshold alerts and per-tick CSV export. | — |
+
+### Scripts — `mql5/Scripts/AlgoSphere/`
+
+| Program | What it does | Docs |
+|---|---|---|
+| `ASQ_JournalExport.mq5` | One-click CSV export of the trade history with R:R, win rate, expectancy, streaks, best/worst trade and average duration. | [product page](docs/products/ASQ_JournalExport.md) |
+
+### Libraries — `mql5/Include/`
+
+| File | Purpose |
+|---|---|
+| `AlgoSphere/ASQ_NewsFilter.mqh` | Economic-calendar guard (MQL5 Calendar API): blocks trading around events, cooldowns, intensity score, next-events panel. |
+| `AlgoSphere/ASQ_RecoveryEngine.mqh` | Anti-tilt risk control: revenge-trade guard, heat score, risk reduction after losses, martingale protection. |
+| `AlgoSphere/ASQ_TelegramNotifier.mqh` | Telegram alerts: trade events, daily/weekly summaries, several chats, silent hours, retry queue. Token and chat ID are inputs, never constants. |
+| `AlgoSphere/PositionSizer.mqh` | Risk-based lot sizing from stop distance, tick value and broker volume limits. |
+| `AlgoSphere/StopLossManager.mqh` | Stop-loss placement and management helpers. |
+| `AlgoSphere/SpreadMonitor.mqh` | Spread statistics and filtering. |
+| `ASQSafeScalping/ASQCore.mqh` | Safe Scalping: enums, structs, logging, utilities. |
+| `ASQSafeScalping/ASQStrategy.mqh` | Safe Scalping: 7-condition signal engine. |
+| `ASQSafeScalping/ASQTrading.mqh` | Safe Scalping: execution, risk, break-even, trailing, partial close, peak drawdown. |
+| `ASQSafeScalping/ASQDashboard.mqh` | Safe Scalping: on-chart cockpit and analytics panel. |
+
+### Presets — `mql5/Presets/ASQ_SafeScalping/`
+
+The production preset for XAUUSD M5 and the four `.set` files of the optimisation workflow, explained in the [Safe Scalping product page](docs/products/ASQ_SafeScalping.md#preset-files).
+
+### Screenshots
+
+<p align="center">
+<img src="docs/images/ASQ_CommandDesk_Dashboard.png" width="48%" alt="ASQ CommandDesk"/>
+<img src="docs/images/ASQ_PropGuard_Screenshot.png" width="48%" alt="ASQ PropGuard"/>
+</p>
+<p align="center">
+<img src="docs/images/ASQ_NewsFilter_Dashboard.png" width="48%" alt="ASQ NewsFilter demo"/>
+<img src="docs/images/ASQ_RecoveryEngine_Dashboard.png" width="48%" alt="ASQ RecoveryEngine demo"/>
+</p>
+
+More in [`docs/images/`](docs/images).
+
+---
+
+## NinjaTrader 8 — `ninjatrader/`
+
+**Install:** copy the `.cs` files into `Documents/NinjaTrader 8/bin/Custom/Indicators` (or `Strategies`), then compile from the NinjaScript Editor (F5).
+
+### Indicators
+
+| File | What it does |
+|---|---|
+| `SMC_LiquidityMaster.cs` | Smart Money Concepts liquidity: sell-side/buy-side liquidity, grabs, traps, points of interest, trendlines, M15 + H4. |
+| `LiquidityZonesWithTrendlines.cs` | Buy/sell-side liquidity from equal highs/lows and trendlines. |
+| `OrderBlockDetector.cs` | Bullish and bearish order blocks after a break of structure; levels exposed to strategies. |
+| `FairValueGapDetector.cs` | Bullish and bearish fair value gaps. |
+| `ChangeOfCharacterDetector.cs` | Change of character (CHoCH) with structure-break validation. |
+| `PremiumDiscountZones.cs` | Premium and discount zones from Fibonacci levels, automatic trend detection. |
+| `Anissa20.cs` | Swing structure: break of structure, order blocks, CHoCH, market structure breaks, session-aware alerts. |
+| `Sola1.cs` | Swing breakout on NinjaTrader's native Swing, with CHoCH, volume and retest filters. |
+| `DominantMovement.cs` | Dominant directional movement oscillator. |
+| `Ichimoku.cs` | Ichimoku cloud (Tenkan, Kijun, Senkou A/B, Chikou). |
+
+### Strategies
+
+| File | What it does |
+|---|---|
+| `SophonScalpingStrategy.cs` | Multi-pattern scalping on EMA 19 with confluence scoring. |
+| `LiquiditySweepProM15_Advanced.cs` | Liquidity-sweep entries on M15 with break-even and trailing. |
+| `ZScoreMeanReversionStrategy.cs` | Z-score mean reversion: long at −threshold, short at +threshold, exit near the mean. |
+| `DollarBasedSwingBreakStrategy.cs` | Swing-break entries with fixed dollar stop and target. |
+| `TwoBarsStrategy.cs` | Two-bar pattern strategy. |
+
+---
+
+## Python — `python/`
+
+`monte_carlo.py` simulates equity curves, final-capital and maximum-drawdown distributions, risk of ruin, GBM price paths, European option prices and Value at Risk. Every function is vectorised with NumPy and reproducible with `seed=`.
+
+```bash
+cd python
+pip install -r requirements-dev.txt
+pytest            # 29 tests, incl. option prices checked against Black-Scholes
+python monte_carlo.py
+```
+
+```python
+from monte_carlo import simulate_drawdown, risk_of_ruin
+
+dd = simulate_drawdown(win_rate=0.55, avg_win=1.5, avg_loss=1.0, n_trades=200, risk_per_trade=0.01, seed=1)
+print(f"95th percentile max drawdown: {dd.percentile_95:.1%}")
+print(f"P(lose 30% within 500 trades at 2% risk): {risk_of_ruin(0.55, 1.5, 1.0, 0.02, 0.3, 500, seed=1):.2%}")
+```
+
+---
+
+## Risk framework
+
+The rules behind the EAs: [`docs/risk/`](docs/risk/README.md) — position sizing, drawdown recovery and Monte Carlo validation.
+
+---
+
+## Repository layout
 
 ```
-Algorithmic-trading/
-├── tradfi/
-│   ├── ASQ_CommandDesk_v1.00.mq5          # command center for manual traders
-│   ├── ASQ_NewsFilter.mqh (+ _Demo.mq5)   # economic-calendar trading guard
-│   ├── ASQ_RecoveryEngine.mqh (+ _Demo)   # anti-tilt risk management
-│   ├── ASQ/                               # Telegram notifier, spread logger, packaged ASQ builds
-│   ├── mql5/                              # SafeScalperPro, dashboards, include libraries
-│   │   └── ASQ_Legacy/                    # earlier versions, kept for reference
-│   └── ninjatrader/
-│       ├── Indicators/                    # 13 NinjaScript indicators (C#)
-│       ├── Strategies/                    # 4 NinjaScript strategies (C#)
-│       └── Utils/                         # risk-management notes, Monte Carlo (Python)
-├── defi/contracts/FirstContract.sol       # a first Solidity learning contract
-└── assets/                                # screenshots
+algorithmic-trading/
+├── mql5/                    # mirror of the terminal's MQL5 folder
+│   ├── Experts/AlgoSphere/  #   EAs, Examples/ for the libraries
+│   ├── Indicators/AlgoSphere/
+│   ├── Scripts/AlgoSphere/
+│   ├── Include/             #   AlgoSphere/ libraries, ASQSafeScalping/ modules
+│   └── Presets/             #   .set files
+├── ninjatrader/             # Indicators/, Strategies/ (NinjaScript C#)
+├── python/                  # monte_carlo.py + tests/
+├── docs/                    # risk/, products/, reports/, images/
+├── tools/check_repo.py      # repository checks, run by CI
+└── .github/                 # CI workflow, PR and issue templates
 ```
 
----
+## Quality gates
 
-## MetaTrader 5 — MQL5
+Every pull request runs three jobs ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
 
-### Expert Advisors and indicators (open source)
-
-| File | What it does |
+| Job | Checks |
 |---|---|
-| `tradfi/ASQ_CommandDesk_v1.00.mq5` | Command center for manual traders: one-click position handling and risk display |
-| `tradfi/ASQ_NewsFilter.mqh` + `ASQ_NewsFilter_Demo.mq5` | Economic-calendar trading guard using the MQL5 Calendar API, event cooldowns and intensity scoring |
-| `tradfi/ASQ_RecoveryEngine.mqh` + `ASQ_RecoveryEngine_Demo.mq5` | Anti-tilt risk management: revenge-trade guard, heat scoring, martingale protection |
-| `tradfi/ASQ/ASQ_TelegramNotifier.mqh` + `_Demo.mq5` | Telegram trade alerts, daily/weekly summaries, multi-chat, silent hours, retry queue |
-| `tradfi/ASQ/ASQ_SpreadLogger.mq5` | Real-time spread monitoring, statistics and CSV logging |
-| `tradfi/mql5/SafeScalperPro_v3.mq5` + `SSPCore/SSPStrategy/SSPTrading/SSPDashboard.mqh` | Breakout scalping system split into core, strategy, execution and dashboard modules |
-| `tradfi/mql5/ASQ_PropDashboard.mq5` | Prop-firm dashboard: daily and maximum drawdown tracking against funded-account rules |
-| `tradfi/mql5/ASQ_EquityCurve.mq5` | Live equity and balance curve drawn on the chart |
-| `tradfi/mql5/ASQ_SupplyDemand.mq5` | Supply and demand zone detection |
-| `tradfi/mql5/TradingAnalyticsSuite.mq5` | Trade statistics panel |
-| `tradfi/ninjatrader/Utils/CorrelationMatrixPro.mq5` + `DashboardUI.mqh` | Multi-symbol correlation matrix with dashboard UI (MQL5, despite the folder) |
+| Repository checks | `tools/check_repo.py`: no archives, binaries or oversized files; no tokens, keys or hard-coded chat IDs; UTF-8 sources; MQL5 files in the right folder with the right event handlers; every `#include` resolves; no trade calls inside indicators; copyright and version present; no broken links; every source file listed in this README. |
+| Python tests | `ruff` lint and format, `pytest` (29 tests). |
+| Secret scan | gitleaks on the commits of the pull request. |
 
-### Include libraries
+Run the same checks locally before pushing:
 
-`PositionSizer.mqh` (risk-based lot sizing), `StopLossManager.mqh`, `SpreadMonitor.mqh`, `AVGoldAsianBreakout.mqh` — all under `tradfi/mql5/`.
+```bash
+python tools/check_repo.py
+cd python && ruff check . && pytest
+```
 
-### Install
+MetaEditor and NinjaScript compilation are not automated (Windows-only tools): compile before opening a pull request, as the [PR checklist](.github/pull_request_template.md) asks. Builds (`.ex5`, packages) go to [GitHub Releases](https://github.com/e49nana/algorithmic-trading/releases), never into git.
 
-Copy `.mq5` files to `MQL5/Experts/` or `MQL5/Indicators/`, `.mqh` files to `MQL5/Include/`, then compile in MetaEditor. The `*_Demo.mq5` files show how each library is wired into an EA.
+## Known issues
 
-### Packaged builds
+- **`ASQ_PropGuard` auto-close does not run.** It is an indicator, and MetaTrader refuses trade functions inside indicators (error 4014), so its `PositionClose()` calls fail. Monitoring and alerts work; closing positions automatically needs the protection moved to an Expert Advisor. Tracked in `KNOWN_ISSUES` of `tools/check_repo.py`.
 
-Zipped builds of several tools (`tradfi/ASQ/*.zip`, `tradfi/mql5/*.zip`, `tradfi/Algosphere_Quant_v2.10.zip`, `tradfi/Sophon_Complete_v1.2_Final.zip`) are committed for now; they will move to GitHub Releases.
+## Related repositories
 
-<div align="center">
-<img src="tradfi/ASQ_CommandDesk_Dashboard.png" width="45%"/> <img src="tradfi/mql5/ASQ_PropDashboard_Screenshot.png" width="45%"/>
-</div>
-
----
-
-## NinjaTrader 8 — C#
-
-### Indicators (`tradfi/ninjatrader/Indicators/`)
-
-| File | What it does |
-|---|---|
-| `SMC_LiquidityMaster.cs` | Unified Smart Money Concepts indicator: sell-side/buy-side liquidity, grabs, traps, points of interest, trendlines, M15 + H4 |
-| `SMC_LiquidityMap.cs` | Liquidity map for SMC setups |
-| `LiquidityZonesWithTrendlines.cs` | Buy/sell-side liquidity from equal highs/lows and trendlines |
-| `OrderBlockDetector.cs` | Bullish and bearish order blocks after a break of structure, levels exposed to strategies |
-| `FairValueGapDetector.cs` | Bullish and bearish fair value gaps |
-| `ChangeOfCharacterDetector.cs` | Change of character (CHoCH) with structure-break validation |
-| `PremiumDiscountZones.cs` | Premium and discount zones from Fibonacci levels with automatic trend detection |
-| `DominantMovement.cs` | Dominant directional movement |
-| `Ichimoku.cs` | Ichimoku cloud |
-| `VWAPx.cs` | Extended VWAP |
-| `Anissa20.cs` | Swing validation indicator |
-| `DollarBasedSwingBreakStrategy.cs` | Swing-break logic (strategy file kept with the indicators) |
-| `../Sola1.cs` | Swing breakout indicator v1.2 |
-
-### Strategies (`tradfi/ninjatrader/Strategies/`)
-
-| File | What it does |
-|---|---|
-| `SophonScalpingStrategy.cs` | Sophon scalping strategy v2.0 |
-| `LiquiditySweepProM15_Advanced.cs` | Liquidity sweep entries on M15 |
-| `ZScoreMeanReversionStrategy.cs` | Z-score mean reversion |
-| `TwoBarsStrategy.cs` | Two-bar pattern strategy |
-
-### Install
-
-NinjaTrader 8 → Tools → Import → NinjaScript Add-On, or drop the `.cs` files into `Documents/NinjaTrader 8/bin/Custom/Indicators` (or `Strategies`) and compile from the NinjaScript Editor.
-
-<div align="center">
-<img src="tradfi/screenshot_01_overview.png" width="45%"/> <img src="tradfi/screenshot_04_smc.png" width="45%"/>
-</div>
-
----
-
-## Risk management & analytics
-
-`tradfi/ninjatrader/Utils/` holds the written side of the risk work:
-
-- `RISK_MANAGEMENT.md` — the rules behind the EAs
-- `01-position-sizing.md`, `02-drawdown-recovery.md`, `04-monte-carlo.md` — notes on sizing, drawdown recovery and Monte Carlo validation
-- `Python/Monte_Carlo.py` — Monte Carlo utilities for strategy validation and risk metrics (NumPy)
-
-Quantitative research on intraday futures strategies lives in its own repository: **[e49nana/lokus-research](https://github.com/e49nana/lokus-research)** (walk-forward backtesting, 428 tests).
-
----
-
-## AlgoSphere Quant — commercial products
-
-> *Source code is private — links point to the MQL5 Market.*
-
-### Flagship products
-
-| Product | Description | Version |
-|---|---|:---:|
-| **Trade Manager PRO** | Position management — automated break-even, trailing, partial closes, TP ladders, session filter, journal export | v7.10 |
-| **SafeScalperPro** | Automated scalping EA with risk management and prop-firm compliance | v3.0 |
-
-### Product suite (14 products)
-
-**Indicators:** SmartMoney Concepts, Liquidity Heatmap, Volume Profile, Divergence Scanner, Order Flow, Correlation Matrix, Session Control, Account Analytics, Risk Manager
-
-**Utilities:** PropGuard (prop-firm compliance), Risk Manager (drawdown protection), Trade Journal, Position Sizer, News Filter
-
-All products share the ASQ dark theme and common includes. Product pages: [mql5.com/en/users/robin2.0](https://www.mql5.com/en/users/robin2.0).
-
----
-
-## Design principles
-
-- **Deterministic execution** — timer-driven, no race conditions between ticks
-- **Monotonic state machines** — trade states only move forward
-- **Risk first** — every EA ships with drawdown limits and position sizing
-- **Modular includes** — signal, filter, risk and execution are separate `.mqh` modules
-
----
-
-## Solidity
-
-`defi/contracts/FirstContract.sol` is a first learning contract (deposits, withdrawals, owner modifier, events). There is no other blockchain code in this repository.
-
----
+- [e49nana/lokus-research](https://github.com/e49nana/lokus-research) — quantitative research on intraday futures (walk-forward backtesting).
+- [e49nana/Djibril-AI](https://github.com/e49nana/Djibril-AI) — crude-oil trading system driven by geopolitical analysis (FastAPI, React, MetaTrader 5 EA).
 
 ## Disclaimer
 
-Trading involves significant risk of loss. The code here is provided for educational and research purposes. Past performance does not guarantee future results. Test on a demo account before any live use.
+Trading involves significant risk of loss. This code is provided for education and research. Backtest and Monte Carlo results describe the past and do not guarantee future results. Test on a demo account before any live use.
 
-## Author
+## Author and license
 
-**Emmanuel Nana Nana** — Founder, [AlgoSphere Quant](https://algosphere-quant.com) · B.Sc. Applied Mathematics & Physics, TH Nürnberg
+**Emmanuel Nana Nana** — AlgoSphere Quant · [MQL5 profile](https://www.mql5.com/en/users/robin2.0) · B.Sc. Applied Mathematics & Physics, TH Nürnberg
 
-[![GitHub](https://img.shields.io/badge/GitHub-e49nana-181717?style=flat&logo=github)](https://github.com/e49nana)
-[![MQL5](https://img.shields.io/badge/MQL5-robin2.0-4A76A8?style=flat&logo=metatrader5)](https://www.mql5.com/en/users/robin2.0)
-
-## License
-
-Open-source code: [MIT](LICENSE). AlgoSphere Quant products: proprietary.
-
-<div align="center">
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:1a1b27,100:0f6b3a&height=100&section=footer" width="100%"/>
-</div>
+Code in this repository: [MIT](LICENSE). AlgoSphere Quant paid products: proprietary.

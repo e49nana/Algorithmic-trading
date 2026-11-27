@@ -403,8 +403,7 @@ When exiting drawdown:
 ## 🔗 Related Documents
 
 - [01-position-sizing.md](./01-position-sizing.md) - Position sizing fundamentals
-- [03-correlation-analysis.md](./03-correlation-analysis.md) - Multi-pair correlation
-- [04-monte-carlo.md](./04-monte-carlo.md) - Monte Carlo simulation
+- [03-monte-carlo.md](./03-monte-carlo.md) - Monte Carlo simulation
 
 ---
 

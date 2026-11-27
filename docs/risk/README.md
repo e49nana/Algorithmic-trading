@@ -1,5 +1,11 @@
 # Risk Management Framework
 
+Short reference behind the risk logic of the EAs in this repository. Detailed notes:
+
+1. [Position sizing](01-position-sizing.md)
+2. [Drawdown recovery](02-drawdown-recovery.md)
+3. [Monte Carlo validation](03-monte-carlo.md) — code in [`python/monte_carlo.py`](../../python/monte_carlo.py)
+
 ## Position Sizing Methods
 
 ### Fixed Fractional Method
@@ -43,9 +49,10 @@ private double CalculatePositionSize(double entryPrice, double stopLoss, double 
 {
     double accountSize = Account.Get(AccountItem.CashValue, Currency.UsDollar);
     double riskAmount = accountSize * (riskPercent / 100);
-    double pipRisk = Math.Abs(entryPrice - stopLoss);
+    double pointValue = Instrument.MasterInstrument.PointValue; // e.g. MES = 5 USD per point
+    double riskPerContract = Math.Abs(entryPrice - stopLoss) * pointValue;
     
-    return Math.Floor(riskAmount / pipRisk);
+    return riskPerContract > 0 ? Math.Floor(riskAmount / riskPerContract) : 0;
 }
 ```
 
@@ -71,5 +78,4 @@ The math of recovery — why protecting capital matters:
 
 ---
 
-*Part of the AnaCristina Trading Framework*  
 *Author: [Emmanuel Nana Nana](https://github.com/e49nana)*

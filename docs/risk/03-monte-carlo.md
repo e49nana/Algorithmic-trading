@@ -629,7 +629,6 @@ Before going live:
 
 - [01-position-sizing.md](./01-position-sizing.md) - Position sizing fundamentals
 - [02-drawdown-recovery.md](./02-drawdown-recovery.md) - Drawdown recovery strategies
-- [03-correlation-analysis.md](./03-correlation-analysis.md) - Multi-pair correlation
 
 ---
 

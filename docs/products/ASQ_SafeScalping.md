@@ -1,36 +1,25 @@
-# ASQ Safe Scalping v1.10
+# ASQ Safe Scalping v1.11
 ### AlgoSphere Quant | https://www.mql5.com/en/users/robin2.0
 
 ---
 
-## Architecture
+## Files
 
-```
-Experts/
-  ASQ_SafeScalping.mq5          → Main EA (Market version, Scarlet Forge dashboard)
+| Path in this repository | Role |
+|---|---|
+| `mql5/Experts/AlgoSphere/ASQ_SafeScalping.mq5` | Main EA (inputs, event handlers) |
+| `mql5/Include/ASQSafeScalping/ASQCore.mqh` | Enums, structs, logging, utilities |
+| `mql5/Include/ASQSafeScalping/ASQTrading.mqh` | Execution, risk, break-even, trailing, partial close, peak DD |
+| `mql5/Include/ASQSafeScalping/ASQStrategy.mqh` | 7-condition signal engine (EMA + RSI + breakout + MTF) |
+| `mql5/Include/ASQSafeScalping/ASQDashboard.mqh` | Scarlet Forge GUI (cockpit + analytics panel) |
+| `mql5/Presets/ASQ_SafeScalping/*.set` | Production preset and the four optimisation phases |
 
-Include/ASQSafeScalping/
-  ASQCore.mqh                   → Enums, structs, logging, utilities
-  ASQTrading.mqh                → Execution, risk, breakeven, trailing, partial close, peak DD
-  ASQStrategy.mqh               → 7-condition signal engine (EMA+RSI+Breakout+MTF)
-  ASQDashboard.mqh              → Scarlet Forge GUI (cockpit + analytics panel)
+## Installation
 
-ASQ_SafeScalping_CodeBase.mq5   → Single-file version (Code Base, free, open-source)
-```
-
-## Installation (Market version)
-
-1. Copy `ASQ_SafeScalping.mq5` → `MQL5/Experts/`
-2. Copy `Include/ASQSafeScalping/` folder → `MQL5/Include/ASQSafeScalping/`
-3. Compile in MetaEditor
-4. Attach to XAUUSD M5 chart
-5. Load `ASQ_SafeScalping_XAUUSD_M5_v2.set` in Inputs tab
-
-## Installation (Code Base version)
-
-1. Copy `ASQ_SafeScalping_CodeBase.mq5` → `MQL5/Experts/`
-2. Compile (only requires standard Trade.mqh)
-3. Attach to XAUUSD M5 chart, load .set file
+1. Copy the repository's `mql5/` folder into your terminal's data folder (MetaTrader 5 → File → Open Data Folder → `MQL5`).
+2. Compile `Experts/AlgoSphere/ASQ_SafeScalping.mq5` in MetaEditor.
+3. Attach to an XAUUSD M5 chart.
+4. Inputs tab → Load → `Presets/ASQ_SafeScalping/ASQ_SafeScalping_XAUUSD_M5_v2.set`.
 
 ## Preset Files
 
@@ -60,6 +49,11 @@ ASQ_SafeScalping_CodeBase.mq5   → Single-file version (Code Base, free, open-s
 6. Close-to-close momentum confirmation
 7. [Optional] H1 EMA 20/50 MTF agreement
 
+## v1.11 (2026-11-27)
+
+- Risk mode no longer raises the lot to the broker minimum: if the risk-based lot is below the minimum, the trade is skipped and logged, so the real risk never exceeds the configured percentage.
+- Risk-based lot is rounded down to the volume step instead of rounded to 2 decimals.
+
 ## v1.10 Features
 
 - Trailing stop (configurable start/step)
@@ -79,6 +73,9 @@ ASQ_SafeScalping_CodeBase.mq5   → Single-file version (Code Base, free, open-s
 - MTF: H1 EMA 20/50 confirmation enabled
 
 ## Monte Carlo Results (500 runs)
+
+Full report: [`docs/reports/ASQ_SafeScalping_MonteCarlo_XAUUSD_M5.html`](../reports/ASQ_SafeScalping_MonteCarlo_XAUUSD_M5.html). Past results do not guarantee future results.
+
 
 - Median return: +2.6%
 - Median max DD: 2.7%

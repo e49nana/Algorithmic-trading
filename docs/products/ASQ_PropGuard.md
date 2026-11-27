@@ -1,5 +1,7 @@
 # ASQ PropGuard v2.0 — MQL5 Code Base Description (English)
 
+> **Known issue:** the auto-close protection does not run. PropGuard is an indicator and MetaTrader refuses trade functions inside indicators (error 4014). Monitoring, progress bars and alerts work. See the README, *Known issues*.
+
 ---
 
 ## Title
