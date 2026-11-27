@@ -1,21 +1,46 @@
 """
-Monte Carlo Simulation Utilities
-=================================
-Tools for probabilistic analysis and risk assessment.
-Applications: Trading strategy validation, option pricing, risk metrics.
+Monte Carlo utilities for strategy validation and risk metrics.
 
-Author: Emmanuel Nana Nana
-Repo: Side-Activities / Algorithmic-trading
+Every simulation is vectorised with NumPy and reproducible through ``seed``.
+The trade simulators use fixed-fractional sizing: each trade risks
+``risk_per_trade`` of the current capital and wins ``avg_win`` R or loses
+``avg_loss`` R.
+
+Author: Emmanuel Nana Nana (AlgoSphere Quant)
+Repository: https://github.com/e49nana/algorithmic-trading
 """
 
-import numpy as np
-from typing import Callable, Tuple, List, Optional
+from __future__ import annotations
+
 from dataclasses import dataclass
+from statistics import NormalDist
+from typing import Callable, Optional, Tuple
+
+import numpy as np
+
+__all__ = [
+    "SimulationResult",
+    "monte_carlo",
+    "equity_curves",
+    "simulate_trades",
+    "simulate_drawdown",
+    "risk_of_ruin",
+    "geometric_brownian_motion",
+    "monte_carlo_option_price",
+    "calculate_var",
+    "monte_carlo_var",
+]
+
+
+# =============================================================================
+# RESULT CONTAINER
+# =============================================================================
 
 
 @dataclass
 class SimulationResult:
-    """Container for Monte Carlo simulation results."""
+    """Summary statistics and raw samples of one simulation."""
+
     mean: float
     std: float
     median: float
@@ -24,145 +49,131 @@ class SimulationResult:
     min_value: float
     max_value: float
     samples: np.ndarray
-    
-    def confidence_interval(self, level: float = 0.95) -> Tuple[float, float]:
-        """Return confidence interval at given level."""
-        alpha = (1 - level) / 2
-        lower = np.percentile(self.samples, alpha * 100)
-        upper = np.percentile(self.samples, (1 - alpha) * 100)
-        return (lower, upper)
-    
-    def prob_above(self, threshold: float) -> float:
-        """Probability of outcome above threshold."""
-        return np.mean(self.samples > threshold)
-    
-    def prob_below(self, threshold: float) -> float:
-        """Probability of outcome below threshold."""
-        return np.mean(self.samples < threshold)
-    
-    def __repr__(self) -> str:
-        return (
-            f"SimulationResult(\n"
-            f"  mean={self.mean:.4f}, std={self.std:.4f}\n"
-            f"  median={self.median:.4f}\n"
-            f"  95% CI=[{self.percentile_5:.4f}, {self.percentile_95:.4f}]\n"
-            f"  range=[{self.min_value:.4f}, {self.max_value:.4f}]\n"
-            f"  n_samples={len(self.samples)}\n"
-            f")"
+
+    @classmethod
+    def from_samples(cls, samples: np.ndarray) -> "SimulationResult":
+        samples = np.asarray(samples, dtype=float)
+        return cls(
+            mean=float(np.mean(samples)),
+            std=float(np.std(samples)),
+            median=float(np.median(samples)),
+            percentile_5=float(np.percentile(samples, 5)),
+            percentile_95=float(np.percentile(samples, 95)),
+            min_value=float(np.min(samples)),
+            max_value=float(np.max(samples)),
+            samples=samples,
         )
 
+    def confidence_interval(self, level: float = 0.95) -> Tuple[float, float]:
+        """Two-sided empirical interval containing ``level`` of the samples."""
+        alpha = (1.0 - level) / 2.0
+        lower, upper = np.percentile(self.samples, [alpha * 100, (1.0 - alpha) * 100])
+        return float(lower), float(upper)
+
+    def prob_above(self, threshold: float) -> float:
+        """Share of samples strictly above ``threshold``."""
+        return float(np.mean(self.samples > threshold))
+
+    def prob_below(self, threshold: float) -> float:
+        """Share of samples strictly below ``threshold``."""
+        return float(np.mean(self.samples < threshold))
+
 
 # =============================================================================
-# CORE MONTE CARLO ENGINE
+# GENERIC ENGINE
 # =============================================================================
+
 
 def monte_carlo(
-    simulation_func: Callable[[], float],
-    n_simulations: int = 10000,
-    seed: Optional[int] = None
+    simulation_func: Callable[[np.random.Generator], float],
+    n_simulations: int = 10_000,
+    seed: Optional[int] = None,
 ) -> SimulationResult:
     """
-    Run Monte Carlo simulation.
-    
-    Parameters
-    ----------
-    simulation_func : Callable
-        Function that returns one random outcome
-    n_simulations : int
-        Number of simulations to run
-    seed : int, optional
-        Random seed for reproducibility
-        
-    Returns
-    -------
-    SimulationResult
-        Statistics and samples from simulation
-    
-    Example
-    -------
-    >>> def coin_flip_game():
-    ...     return 1 if np.random.random() > 0.5 else -1
-    >>> result = monte_carlo(coin_flip_game, n_simulations=10000)
-    >>> print(result.mean)  # Should be close to 0
+    Run ``simulation_func`` ``n_simulations`` times and summarise the outcomes.
+
+    ``simulation_func`` receives a ``numpy.random.Generator`` and returns one
+    outcome. Prefer the vectorised helpers below for trading questions: this
+    generic loop runs in Python and is slow beyond ~10^5 draws.
+
+    >>> res = monte_carlo(lambda rng: 1.0 if rng.random() > 0.5 else -1.0, 2000, seed=1)
+    >>> abs(res.mean) < 0.1
+    True
     """
-    if seed is not None:
-        np.random.seed(seed)
-    
-    samples = np.array([simulation_func() for _ in range(n_simulations)])
-    
-    return SimulationResult(
-        mean=np.mean(samples),
-        std=np.std(samples),
-        median=np.median(samples),
-        percentile_5=np.percentile(samples, 5),
-        percentile_95=np.percentile(samples, 95),
-        min_value=np.min(samples),
-        max_value=np.max(samples),
-        samples=samples
+    rng = np.random.default_rng(seed)
+    samples = np.fromiter(
+        (simulation_func(rng) for _ in range(n_simulations)), dtype=float, count=n_simulations
     )
+    return SimulationResult.from_samples(samples)
 
 
 # =============================================================================
-# TRADING APPLICATIONS
+# TRADING
 # =============================================================================
+
+
+def _validate_trade_inputs(
+    win_rate: float, avg_win: float, avg_loss: float, n_trades: int, risk_per_trade: float
+) -> None:
+    if not 0.0 <= win_rate <= 1.0:
+        raise ValueError("win_rate must be in [0, 1]")
+    if avg_win < 0 or avg_loss < 0:
+        raise ValueError("avg_win and avg_loss are R-multiples and must be >= 0")
+    if n_trades < 1:
+        raise ValueError("n_trades must be >= 1")
+    if not 0.0 <= risk_per_trade <= 1.0:
+        raise ValueError("risk_per_trade is a fraction of capital in [0, 1]")
+
+
+def equity_curves(
+    win_rate: float,
+    avg_win: float,
+    avg_loss: float,
+    n_trades: int,
+    n_simulations: int = 10_000,
+    initial_capital: float = 10_000.0,
+    risk_per_trade: float = 0.01,
+    seed: Optional[int] = None,
+) -> np.ndarray:
+    """
+    Simulated equity after each trade, shape ``(n_simulations, n_trades + 1)``.
+
+    Column 0 is the initial capital. Capital is floored at 0 (an account that
+    reaches 0 stays at 0).
+    """
+    _validate_trade_inputs(win_rate, avg_win, avg_loss, n_trades, risk_per_trade)
+    rng = np.random.default_rng(seed)
+    wins = rng.random((n_simulations, n_trades)) < win_rate
+    growth = np.where(wins, 1.0 + risk_per_trade * avg_win, 1.0 - risk_per_trade * avg_loss)
+    np.clip(growth, 0.0, None, out=growth)
+    curves = np.empty((n_simulations, n_trades + 1))
+    curves[:, 0] = initial_capital
+    np.cumprod(growth, axis=1, out=curves[:, 1:])
+    curves[:, 1:] *= initial_capital
+    return curves
+
 
 def simulate_trades(
     win_rate: float,
     avg_win: float,
     avg_loss: float,
     n_trades: int,
-    n_simulations: int = 10000,
-    initial_capital: float = 10000,
-    risk_per_trade: float = 0.01
+    n_simulations: int = 10_000,
+    initial_capital: float = 10_000.0,
+    risk_per_trade: float = 0.01,
+    seed: Optional[int] = None,
 ) -> SimulationResult:
     """
-    Monte Carlo simulation of a trading strategy.
-    
-    Parameters
-    ----------
-    win_rate : float
-        Probability of winning trade (0-1)
-    avg_win : float
-        Average win in R-multiples (e.g., 2.0 = 2R)
-    avg_loss : float
-        Average loss in R-multiples (usually 1.0 = 1R)
-    n_trades : int
-        Number of trades to simulate
-    n_simulations : int
-        Number of equity curves to generate
-    initial_capital : float
-        Starting capital
-    risk_per_trade : float
-        Fraction of capital risked per trade
-        
-    Returns
-    -------
-    SimulationResult
-        Final equity distribution
-    
-    Example
-    -------
-    >>> # 55% win rate, 1.5:1 reward/risk
-    >>> result = simulate_trades(
-    ...     win_rate=0.55, avg_win=1.5, avg_loss=1.0,
-    ...     n_trades=100, n_simulations=10000
-    ... )
-    >>> print(f"Expected final capital: €{result.mean:.2f}")
-    >>> print(f"Probability of profit: {result.prob_above(10000)*100:.1f}%")
+    Distribution of final capital after ``n_trades``.
+
+    >>> r = simulate_trades(0.55, 1.5, 1.0, n_trades=100, seed=7)
+    >>> r.prob_above(10_000) > 0.5
+    True
     """
-    def single_simulation():
-        capital = initial_capital
-        for _ in range(n_trades):
-            risk_amount = capital * risk_per_trade
-            if np.random.random() < win_rate:
-                capital += risk_amount * avg_win
-            else:
-                capital -= risk_amount * avg_loss
-            if capital <= 0:
-                return 0
-        return capital
-    
-    return monte_carlo(single_simulation, n_simulations)
+    curves = equity_curves(
+        win_rate, avg_win, avg_loss, n_trades, n_simulations, initial_capital, risk_per_trade, seed
+    )
+    return SimulationResult.from_samples(curves[:, -1])
 
 
 def simulate_drawdown(
@@ -170,41 +181,19 @@ def simulate_drawdown(
     avg_win: float,
     avg_loss: float,
     n_trades: int,
-    n_simulations: int = 10000
+    n_simulations: int = 10_000,
+    risk_per_trade: float = 0.01,
+    seed: Optional[int] = None,
 ) -> SimulationResult:
     """
-    Simulate maximum drawdown distribution.
-    
-    Returns
-    -------
-    SimulationResult
-        Maximum drawdown distribution (as positive percentages)
+    Distribution of the maximum peak-to-trough drawdown, as a fraction (0.12 = 12 %).
+
+    The result does not depend on the starting capital, only on the sizing.
     """
-    def single_simulation():
-        capital = 10000
-        peak = capital
-        max_dd = 0
-        
-        for _ in range(n_trades):
-            risk_amount = capital * 0.01
-            if np.random.random() < win_rate:
-                capital += risk_amount * avg_win
-            else:
-                capital -= risk_amount * avg_loss
-            
-            if capital > peak:
-                peak = capital
-            
-            dd = (peak - capital) / peak
-            if dd > max_dd:
-                max_dd = dd
-                
-            if capital <= 0:
-                return 1.0  # 100% drawdown
-        
-        return max_dd
-    
-    return monte_carlo(single_simulation, n_simulations)
+    curves = equity_curves(win_rate, avg_win, avg_loss, n_trades, n_simulations, 1.0, risk_per_trade, seed)
+    peaks = np.maximum.accumulate(curves, axis=1)
+    max_dd = np.max((peaks - curves) / peaks, axis=1)
+    return SimulationResult.from_samples(max_dd)
 
 
 def risk_of_ruin(
@@ -214,55 +203,24 @@ def risk_of_ruin(
     risk_per_trade: float = 0.02,
     ruin_threshold: float = 0.5,
     n_trades: int = 500,
-    n_simulations: int = 10000
+    n_simulations: int = 10_000,
+    seed: Optional[int] = None,
 ) -> float:
     """
-    Calculate probability of losing X% of capital (risk of ruin).
-    
-    Parameters
-    ----------
-    win_rate : float
-        Win probability
-    avg_win : float
-        Average win in R
-    avg_loss : float
-        Average loss in R
-    risk_per_trade : float
-        Risk per trade as fraction
-    ruin_threshold : float
-        What counts as "ruin" (0.5 = 50% loss)
-    n_trades : int
-        Trading horizon
-    n_simulations : int
-        Number of simulations
-        
-    Returns
-    -------
-    float
-        Probability of ruin (0-1)
+    Probability that equity falls to ``1 - ruin_threshold`` of its start
+    (0.5 = losing half the account) at any point within ``n_trades``.
     """
-    ruin_count = 0
-    ruin_level = 10000 * (1 - ruin_threshold)
-    
-    for _ in range(n_simulations):
-        capital = 10000
-        for _ in range(n_trades):
-            risk_amount = capital * risk_per_trade
-            if np.random.random() < win_rate:
-                capital += risk_amount * avg_win
-            else:
-                capital -= risk_amount * avg_loss
-            
-            if capital <= ruin_level:
-                ruin_count += 1
-                break
-    
-    return ruin_count / n_simulations
+    if not 0.0 < ruin_threshold <= 1.0:
+        raise ValueError("ruin_threshold must be in (0, 1]")
+    curves = equity_curves(win_rate, avg_win, avg_loss, n_trades, n_simulations, 1.0, risk_per_trade, seed)
+    ruined = np.any(curves[:, 1:] <= 1.0 - ruin_threshold, axis=1)
+    return float(np.mean(ruined))
 
 
 # =============================================================================
-# FINANCIAL APPLICATIONS
+# PRICES AND OPTIONS
 # =============================================================================
+
 
 def geometric_brownian_motion(
     S0: float,
@@ -270,43 +228,18 @@ def geometric_brownian_motion(
     sigma: float,
     T: float,
     n_steps: int,
-    n_simulations: int = 10000
+    n_simulations: int = 10_000,
+    seed: Optional[int] = None,
 ) -> np.ndarray:
     """
-    Simulate asset price paths using Geometric Brownian Motion.
-    
-    dS = μS dt + σS dW
-    
-    Parameters
-    ----------
-    S0 : float
-        Initial price
-    mu : float
-        Drift (expected return, annualized)
-    sigma : float
-        Volatility (annualized)
-    T : float
-        Time horizon in years
-    n_steps : int
-        Number of time steps
-    n_simulations : int
-        Number of paths
-        
-    Returns
-    -------
-    np.ndarray
-        Price paths, shape (n_simulations, n_steps + 1)
+    Price paths following dS = mu S dt + sigma S dW, shape ``(n_simulations, n_steps + 1)``.
     """
+    rng = np.random.default_rng(seed)
     dt = T / n_steps
-    paths = np.zeros((n_simulations, n_steps + 1))
+    shocks = (mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * rng.standard_normal((n_simulations, n_steps))
+    paths = np.empty((n_simulations, n_steps + 1))
     paths[:, 0] = S0
-    
-    for t in range(1, n_steps + 1):
-        Z = np.random.standard_normal(n_simulations)
-        paths[:, t] = paths[:, t-1] * np.exp(
-            (mu - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z
-        )
-    
+    paths[:, 1:] = S0 * np.exp(np.cumsum(shocks, axis=1))
     return paths
 
 
@@ -316,239 +249,93 @@ def monte_carlo_option_price(
     r: float,
     sigma: float,
     T: float,
-    option_type: str = 'call',
-    n_simulations: int = 100000
+    option_type: str = "call",
+    n_simulations: int = 100_000,
+    seed: Optional[int] = None,
 ) -> Tuple[float, float]:
-    """
-    Price European option using Monte Carlo simulation.
-    
-    Parameters
-    ----------
-    S0 : float
-        Current stock price
-    K : float
-        Strike price
-    r : float
-        Risk-free rate (annualized)
-    sigma : float
-        Volatility (annualized)
-    T : float
-        Time to expiration (years)
-    option_type : str
-        'call' or 'put'
-    n_simulations : int
-        Number of simulations
-        
-    Returns
-    -------
-    Tuple[float, float]
-        (option_price, standard_error)
-    """
-    # Simulate terminal stock prices
-    Z = np.random.standard_normal(n_simulations)
-    ST = S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * Z)
-    
-    # Calculate payoffs
-    if option_type.lower() == 'call':
-        payoffs = np.maximum(ST - K, 0)
-    else:
-        payoffs = np.maximum(K - ST, 0)
-    
-    # Discount to present value
-    option_price = np.exp(-r * T) * np.mean(payoffs)
-    std_error = np.exp(-r * T) * np.std(payoffs) / np.sqrt(n_simulations)
-    
-    return option_price, std_error
+    """European option price and its standard error: ``(price, std_error)``."""
+    kind = option_type.lower()
+    if kind not in ("call", "put"):
+        raise ValueError("option_type must be 'call' or 'put'")
+    rng = np.random.default_rng(seed)
+    z = rng.standard_normal(n_simulations)
+    st = S0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * z)
+    payoffs = np.maximum(st - K, 0.0) if kind == "call" else np.maximum(K - st, 0.0)
+    discount = np.exp(-r * T)
+    price = discount * float(np.mean(payoffs))
+    std_error = discount * float(np.std(payoffs, ddof=1)) / np.sqrt(n_simulations)
+    return float(price), float(std_error)
 
 
 # =============================================================================
-# VALUE AT RISK (VaR)
+# VALUE AT RISK
 # =============================================================================
+
 
 def calculate_var(
     returns: np.ndarray,
     confidence_level: float = 0.95,
-    investment: float = 10000,
-    method: str = 'historical'
+    investment: float = 10_000.0,
+    method: str = "historical",
 ) -> float:
     """
-    Calculate Value at Risk.
-    
-    Parameters
-    ----------
-    returns : np.ndarray
-        Historical returns (daily)
-    confidence_level : float
-        VaR confidence level (e.g., 0.95 for 95%)
-    investment : float
-        Portfolio value
-    method : str
-        'historical' or 'parametric'
-        
-    Returns
-    -------
-    float
-        VaR in currency units (positive number = potential loss)
+    Value at Risk in currency units (positive number = potential loss).
+
+    ``method`` is ``"historical"`` (empirical quantile) or ``"parametric"``
+    (normal distribution fitted on ``returns``).
     """
-    if method == 'historical':
-        var_pct = np.percentile(returns, (1 - confidence_level) * 100)
-    else:  # parametric (assumes normal distribution)
-        mu = np.mean(returns)
-        sigma = np.std(returns)
-        from scipy import stats
-        var_pct = mu + sigma * stats.norm.ppf(1 - confidence_level)
-    
+    returns = np.asarray(returns, dtype=float)
+    if method == "historical":
+        var_pct = float(np.percentile(returns, (1.0 - confidence_level) * 100))
+    elif method == "parametric":
+        z = NormalDist().inv_cdf(1.0 - confidence_level)
+        var_pct = float(np.mean(returns)) + float(np.std(returns)) * z
+    else:
+        raise ValueError("method must be 'historical' or 'parametric'")
     return -var_pct * investment
 
 
 def monte_carlo_var(
     mu: float,
     sigma: float,
-    investment: float = 10000,
+    investment: float = 10_000.0,
     horizon_days: int = 1,
     confidence_level: float = 0.95,
-    n_simulations: int = 10000
+    n_simulations: int = 10_000,
+    seed: Optional[int] = None,
 ) -> float:
-    """
-    Calculate VaR using Monte Carlo simulation.
-    
-    Parameters
-    ----------
-    mu : float
-        Expected daily return
-    sigma : float
-        Daily volatility
-    investment : float
-        Portfolio value
-    horizon_days : int
-        VaR time horizon
-    confidence_level : float
-        Confidence level
-    n_simulations : int
-        Number of simulations
-        
-    Returns
-    -------
-    float
-        VaR in currency units
-    """
-    # Simulate returns over horizon
-    simulated_returns = np.random.normal(
-        mu * horizon_days,
-        sigma * np.sqrt(horizon_days),
-        n_simulations
-    )
-    
-    # Calculate portfolio values
-    portfolio_values = investment * (1 + simulated_returns)
-    
-    # VaR is the loss at the confidence percentile
-    var_value = investment - np.percentile(portfolio_values, (1 - confidence_level) * 100)
-    
-    return var_value
+    """VaR in currency units from normally distributed simulated returns."""
+    rng = np.random.default_rng(seed)
+    simulated = rng.normal(mu * horizon_days, sigma * np.sqrt(horizon_days), n_simulations)
+    values = investment * (1.0 + simulated)
+    return float(investment - np.percentile(values, (1.0 - confidence_level) * 100))
 
 
 # =============================================================================
-# EXAMPLE USAGE
+# DEMO
 # =============================================================================
 
 if __name__ == "__main__":
-    print("=" * 60)
-    print("MONTE CARLO SIMULATION DEMO")
-    print("=" * 60)
-    
-    # --- Test 1: Trading strategy simulation ---
-    print("\n1. Trading Strategy Simulation")
-    print("-" * 40)
-    print("   Strategy: 55% win rate, 1.5:1 R/R, 100 trades")
-    
-    result = simulate_trades(
-        win_rate=0.55,
-        avg_win=1.5,
-        avg_loss=1.0,
-        n_trades=100,
-        n_simulations=10000,
-        initial_capital=10000,
-        risk_per_trade=0.01
-    )
-    
-    print(f"\n   Results (starting capital: €10,000):")
-    print(f"   Expected final capital: €{result.mean:,.2f}")
-    print(f"   Median final capital:   €{result.median:,.2f}")
-    print(f"   95% CI: €{result.percentile_5:,.2f} - €{result.percentile_95:,.2f}")
-    print(f"   Probability of profit:  {result.prob_above(10000)*100:.1f}%")
-    print(f"   Probability of 50%+ gain: {result.prob_above(15000)*100:.1f}%")
-    
-    # --- Test 2: Risk of Ruin ---
-    print("\n2. Risk of Ruin Analysis")
-    print("-" * 40)
-    
-    ror = risk_of_ruin(
-        win_rate=0.55,
-        avg_win=1.5,
-        avg_loss=1.0,
-        risk_per_trade=0.02,
-        ruin_threshold=0.5,
-        n_trades=500
-    )
-    print(f"   Risk per trade: 2%")
-    print(f"   Probability of 50% drawdown: {ror*100:.2f}%")
-    
-    ror_aggressive = risk_of_ruin(
-        win_rate=0.55,
-        avg_win=1.5,
-        avg_loss=1.0,
-        risk_per_trade=0.05,
-        ruin_threshold=0.5,
-        n_trades=500
-    )
-    print(f"\n   Risk per trade: 5% (aggressive)")
-    print(f"   Probability of 50% drawdown: {ror_aggressive*100:.2f}%")
-    
-    # --- Test 3: Option Pricing ---
-    print("\n3. European Call Option Pricing (Monte Carlo)")
-    print("-" * 40)
-    
-    price, std_err = monte_carlo_option_price(
-        S0=100,      # Stock price
-        K=105,       # Strike
-        r=0.05,      # Risk-free rate
-        sigma=0.2,   # Volatility
-        T=1.0,       # 1 year
-        option_type='call',
-        n_simulations=100000
-    )
-    
-    print(f"   S0=€100, K=€105, r=5%, σ=20%, T=1 year")
-    print(f"   Call option price: €{price:.4f}")
-    print(f"   Standard error:    €{std_err:.4f}")
-    print(f"   95% CI: €{price - 1.96*std_err:.4f} - €{price + 1.96*std_err:.4f}")
-    
-    # --- Test 4: VaR ---
-    print("\n4. Value at Risk (Monte Carlo)")
-    print("-" * 40)
-    
-    var_95 = monte_carlo_var(
-        mu=0.0005,      # 0.05% daily expected return
-        sigma=0.02,     # 2% daily volatility
-        investment=100000,
-        horizon_days=1,
-        confidence_level=0.95
-    )
-    
-    var_99 = monte_carlo_var(
-        mu=0.0005,
-        sigma=0.02,
-        investment=100000,
-        horizon_days=1,
-        confidence_level=0.99
-    )
-    
-    print(f"   Portfolio: €100,000")
-    print(f"   Daily volatility: 2%")
-    print(f"   1-day 95% VaR: €{var_95:,.2f}")
-    print(f"   1-day 99% VaR: €{var_99:,.2f}")
-    
-    print("\n" + "=" * 60)
-    print("All simulations completed!")
-    print("=" * 60)
+    line = "=" * 60
+    print(line, "MONTE CARLO DEMO", line, sep="\n")
+
+    res = simulate_trades(0.55, 1.5, 1.0, n_trades=100, risk_per_trade=0.01, seed=42)
+    lo, hi = res.confidence_interval(0.90)
+    print("\n1. 55% win rate, 1.5R / 1R, 100 trades, 1% risk, start 10,000")
+    print(f"   median final capital : {res.median:,.2f}")
+    print(f"   90% interval         : {lo:,.2f} - {hi:,.2f}")
+    print(f"   P(profit)            : {res.prob_above(10_000):.1%}")
+
+    dd = simulate_drawdown(0.55, 1.5, 1.0, n_trades=100, risk_per_trade=0.01, seed=42)
+    print(f"   median max drawdown  : {dd.median:.1%} (95th pct {dd.percentile_95:.1%})")
+
+    print("\n2. Risk of losing 50% within 500 trades")
+    for risk in (0.01, 0.02, 0.05):
+        print(f"   {risk:.0%} per trade : {risk_of_ruin(0.55, 1.5, 1.0, risk, 0.5, 500, seed=42):.2%}")
+
+    price, se = monte_carlo_option_price(100, 105, 0.05, 0.2, 1.0, "call", seed=42)
+    print(f"\n3. Call S0=100 K=105 r=5% sigma=20% T=1y : {price:.4f} +/- {1.96 * se:.4f}")
+
+    v95 = monte_carlo_var(0.0005, 0.02, 100_000, 1, 0.95, seed=42)
+    v99 = monte_carlo_var(0.0005, 0.02, 100_000, 1, 0.99, seed=42)
+    print(f"\n4. 1-day VaR on 100,000 (2% daily vol): 95% {v95:,.0f} | 99% {v99:,.0f}")
