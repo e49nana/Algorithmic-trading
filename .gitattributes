@@ -1,0 +1,15 @@
+# Normalise line endings in the repository; checkouts follow the local platform.
+* text=auto
+
+*.mq5  text diff=cpp    linguist-language=MQL5
+*.mqh  text diff=cpp    linguist-language=MQL5
+*.cs   text diff=csharp
+*.py   text diff=python
+*.set  text
+*.md   text diff=markdown
+
+*.png  binary
+*.jpg  binary
+
+# Generated report: keep it out of the language statistics
+docs/reports/*.html linguist-generated

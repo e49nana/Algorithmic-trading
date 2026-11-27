@@ -1,0 +1,39 @@
+name: Bug report
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: input
+    id: product
+    attributes:
+      label: Product and version
+      description: As shown in the Inputs tab or the panel header, e.g. "ASQ Safe Scalping 1.11"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [MetaTrader 5, NinjaTrader 8, Python]
+    validations:
+      required: true
+  - type: input
+    id: account
+    attributes:
+      label: Broker, account type and symbol/timeframe
+      description: e.g. "Pepperstone, hedging, XAUUSD M5" — never paste account numbers or passwords
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Experts / Journal log
+      description: MetaTrader → Toolbox → Experts tab → right click → Open. Paste the lines around the problem.
+      render: text
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce (inputs or .set file)
