@@ -11,7 +11,7 @@
 //+------------------------------------------------------------------+
 #property copyright   "AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/robin2.0"
-#property version     "1.10"
+#property version     "1.11"
 #property description "ASQ Safe Scalping - Professional Breakout System"
 #property description "EMA Trend + RSI + Breakout + MTF + Premium Dashboard"
 #property description "Conservative risk | No martingale/grid/hedging"
@@ -210,6 +210,7 @@ void OnTick()
    if(signal==ASQ_SIGNAL_NONE) return;
 
    double lot=g_engine.CalculateLot(g_useLotMode,g_lotSize,g_riskPct,InpStopLoss);
+   if(lot<=0.0) return;   // risk mode: lot below broker minimum, already logged
    if(signal==ASQ_SIGNAL_BUY) g_engine.OpenBuy(lot,InpStopLoss,InpTakeProfit);
    else if(signal==ASQ_SIGNAL_SELL) g_engine.OpenSell(lot,InpStopLoss,InpTakeProfit);
   }
@@ -274,9 +275,9 @@ void OnChartEvent(const int id,const long &lp,const double &dp,const string &sp)
 void ProcessGuiCommands()
   { SAsqGuiCommands cmd; g_dashboard.GetCommands(cmd);
     if(cmd.cmdBuy) { double lot=g_engine.CalculateLot(g_useLotMode,g_lotSize,g_riskPct,InpStopLoss);
-      g_engine.OpenBuy(lot,InpStopLoss,InpTakeProfit); }
+      if(lot>0.0) g_engine.OpenBuy(lot,InpStopLoss,InpTakeProfit); }
     if(cmd.cmdSell) { double lot=g_engine.CalculateLot(g_useLotMode,g_lotSize,g_riskPct,InpStopLoss);
-      g_engine.OpenSell(lot,InpStopLoss,InpTakeProfit); }
+      if(lot>0.0) g_engine.OpenSell(lot,InpStopLoss,InpTakeProfit); }
     if(cmd.cmdCloseAll) g_engine.CloseAllPositions();
     if(cmd.cmdToggleAuto) { g_autoTrading=!g_autoTrading; ASQInfo("Auto "+(g_autoTrading?"ON":"OFF")); }
     if(cmd.cmdModeLot) g_useLotMode=true; if(cmd.cmdModeRisk) g_useLotMode=false;

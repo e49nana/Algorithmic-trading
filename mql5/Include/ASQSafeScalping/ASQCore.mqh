@@ -11,8 +11,8 @@
 #ifndef ASQ_CORE_MQH
 #define ASQ_CORE_MQH
 
-#define ASQ_VERSION          "1.10"
-#define ASQ_BUILD            "20260327"
+#define ASQ_VERSION          "1.11"
+#define ASQ_BUILD            "20261127"
 #define ASQ_NAME             "ASQ Safe Scalping"
 #define ASQ_COMMENT          "ASQv1"
 

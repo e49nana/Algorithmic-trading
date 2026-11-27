@@ -253,7 +253,7 @@ private:
        // COL 1
        int y=by+8;
        m_g.Txt(K("TTL"),c1,y,"ALGOSPHERE",CLR_GLOW,SZ_H1,FN_HEAD);
-       m_g.Txt(K("VER"),c1,y+16,"v1.10 Safe Scalping",CLR_DIM,SZ_SM);
+       m_g.Txt(K("VER"),c1,y+16,"v"+ASQ_VERSION+" Safe Scalping",CLR_DIM,SZ_SM);
        color stBg,stTx; string stTxt; StatusStyle(d,stBg,stTx,stTxt);
        m_g.Box(K("SBG"),c1,y+34,66,17,stBg);
        m_g.Txt(K("STX"),c1+6,y+37,stTxt,stTx,SZ_SM,FN_HEAD);

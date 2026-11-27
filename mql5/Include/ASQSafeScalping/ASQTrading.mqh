@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright   "AlgoSphere Quant"
 #property link        "https://www.mql5.com/en/users/robin2.0"
-#property version     "1.10"
+#property version     "1.11"
 #property strict
 
 #ifndef ASQ_TRADING_MQH
@@ -249,18 +249,28 @@ public:
    //=================================================================
    // LOT CALCULATION
    //=================================================================
+   // Returns 0 when risk mode cannot be honoured (lot below broker minimum):
+   // the caller then skips the trade instead of risking more than requested.
    double CalculateLot(bool useLotMode,double fixedLot,double riskPct,int slPts)
      { double lots=fixedLot;
-       if(!useLotMode&&riskPct>0&&slPts>0)
+       bool riskMode=(!useLotMode&&riskPct>0&&slPts>0);
+       if(riskMode)
          { double bal=m_account.Balance();
            double risk=bal*(ASQClamp(riskPct,0.1,5.0)/100.0);
            double tv=m_market.tickValue,ts=m_market.tickSize;
            if(tv>0&&ts>0) { double slM=slPts*m_market.point/ts*tv;
-             if(slM>0) lots=NormalizeDouble(risk/slM,2); } }
-       if(lots<m_market.lotMin) lots=m_market.lotMin;
+             if(slM>0) lots=risk/slM; } }
+       // Round DOWN to the volume step so the real risk never exceeds the target
+       if(m_market.lotStep>0) lots=MathFloor(lots/m_market.lotStep+1e-9)*m_market.lotStep;
        if(lots>m_market.lotMax) lots=m_market.lotMax;
-       if(m_market.lotStep>0) lots=MathFloor(lots/m_market.lotStep)*m_market.lotStep;
-       return NormalizeDouble(lots,2); }
+       if(lots<m_market.lotMin)
+         { if(riskMode)
+             { ASQWarn("Risk lot "+DoubleToString(lots,3)+" < broker minimum "+DoubleToString(m_market.lotMin,2)+
+                       ": trade skipped to stay within "+DoubleToString(riskPct,2)+"% risk");
+               return 0.0; }
+           lots=m_market.lotMin; }
+       int lotDigits=(m_market.lotStep>0&&m_market.lotStep<1.0)?(int)MathCeil(-MathLog10(m_market.lotStep)-1e-9):2;
+       return NormalizeDouble(lots,lotDigits); }
 
    bool CheckDrawdown(double maxDDPct)
      { if(maxDDPct<=0) return true; return GetDrawdownPct()<maxDDPct; }
