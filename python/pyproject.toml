@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["tests", "monte_carlo.py"]
+addopts = "-q --doctest-modules"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "NPY"]

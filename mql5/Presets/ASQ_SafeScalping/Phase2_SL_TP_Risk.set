@@ -1,0 +1,89 @@
+; ASQ Safe Scalping v1.10 — PHASE 2: SL / TP / Risk
+; ============================================================
+; PURPOSE: Find optimal risk envelope. Most impactful params,
+;          least prone to overfitting (doesn't change signal logic).
+; OPTIMIZE: InpStopLoss, InpTakeProfit, InpRiskPercent
+; PERIOD:   Training set (first 60% of data)
+; MODE:     Slow complete or Genetic optimization
+; CRITERION: Custom max (OnTester fitness)
+; COMBINATIONS: 5 x 6 x 6 = 180 (fast, complete OK)
+; ============================================================
+
+; ====== GENERAL ======
+InpMagicNumber=202503||202503||0||202503||0
+InpTradeComment=ASQv1
+InpMaxSlippage=10||10||0||10||0
+InpLogLevel=1||1||0||3||0
+
+; ====== RISK MANAGEMENT — OPTIMIZE THESE ======
+InpLotMode=1||0||0||1||0
+InpFixedLots=0.01||0.01||0||0.01||0
+InpRiskPercent=0.5||0.3||0.1||0.8||1
+InpMaxDrawdownPct=8.0||8.0||0||8.0||0
+InpMaxDayTrades=4||4||0||4||0
+
+; ====== SL/TP — OPTIMIZE THESE ======
+InpStopLoss=300||200||50||450||1
+InpTakeProfit=450||300||50||600||1
+InpUseBreakeven=1||0||0||1||0
+InpBreakevenStart=150||150||0||150||0
+InpBreakevenOffset=20||20||0||20||0
+
+; ====== TRAILING (FIXED for this phase) ======
+InpUseTrailing=1||0||0||1||0
+InpTrailStart=200||200||0||200||0
+InpTrailStep=100||100||0||100||0
+
+; ====== PARTIAL CLOSE (FIXED) ======
+InpUsePartialClose=1||0||0||1||0
+InpTP1Points=200||200||0||200||0
+InpTP1ClosePercent=50.0||50.0||0||50.0||0
+
+; ====== EMA (FIXED) ======
+InpEmaFast=50||50||0||50||0
+InpEmaSlow=200||200||0||200||0
+InpTrendStrength=1||1||0||1||0
+
+; ====== MTF (FIXED) ======
+InpUseMTF=1||0||0||1||0
+InpMTFTimeframe=16385||16385||0||16385||0
+InpMTFEmaFast=20||20||0||20||0
+InpMTFEmaSlow=50||50||0||50||0
+
+; ====== RSI (FIXED) ======
+InpRsiPeriod=14||14||0||14||0
+InpRsiBuyMin=45.0||45.0||0||45.0||0
+InpRsiBuyMax=65.0||65.0||0||65.0||0
+InpRsiSellMin=35.0||35.0||0||35.0||0
+InpRsiSellMax=55.0||55.0||0||55.0||0
+
+; ====== BREAKOUT (FIXED) ======
+InpBreakoutLookback=15||15||0||15||0
+InpBreakoutBuffer=0.3||0.3||0||0.3||0
+InpAtrPeriod=50||50||0||50||0
+
+; ====== SESSION (FIXED) ======
+InpUseSessionFilter=1||0||0||1||0
+InpSessionStartHour=8||8||0||8||0
+InpSessionStartMin=0||0||0||0||0
+InpSessionEndHour=17||17||0||17||0
+InpSessionEndMin=0||0||0||0||0
+InpAvoidFriday=1||0||0||1||0
+InpFridayCutoffHour=14||14||0||14||0
+
+; ====== SPREAD (FIXED) ======
+InpUseSpreadFilter=1||0||0||1||0
+InpMaxSpread=25||25||0||25||0
+
+; ====== NEWS ======
+InpUseNewsFilter=1||0||0||1||0
+InpNewsTime1=
+InpNewsTime2=
+InpNewsTime3=
+InpNewsMinsBefore=30||30||0||30||0
+InpNewsMinsAfter=15||15||0||15||0
+
+; ====== DISPLAY (OFF for optimization) ======
+InpShowDashboard=0||0||0||0||0
+InpSyncChartTheme=0||0||0||0||0
+InpShowAnalytics=0||0||0||0||0

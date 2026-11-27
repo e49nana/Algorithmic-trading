@@ -1,11 +1,40 @@
-*.pyc
-__pycache__/
-.ipynb_checkpoints/
-.DS_Store
-node_modules/
-.env
+# --- MetaTrader / NinjaTrader build outputs (publish them as GitHub Release assets) ---
+*.ex4
 *.ex5
 *.dll
+*.exe
 bin/
 obj/
+*.log
+Tester/
+Logs/
+
+# --- archives: never commit packaged builds ---
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# --- secrets and local config ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# --- Python ---
+__pycache__/
+*.pyc
 .venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/

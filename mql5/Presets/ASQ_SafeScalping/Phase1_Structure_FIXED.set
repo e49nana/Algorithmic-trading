@@ -1,0 +1,87 @@
+; ASQ Safe Scalping v1.10 — PHASE 1: Structure (ALL FIXED)
+; ============================================================
+; PURPOSE: Baseline test. Run a single backtest with this file
+;          to establish your broker's base performance.
+;          DO NOT optimize anything here.
+; PERIOD:  Full available history (min 6 months)
+; MODE:    Single backtest (not optimization)
+; ============================================================
+
+; ====== GENERAL ======
+InpMagicNumber=202503||202503||0||202503||0
+InpTradeComment=ASQv1
+InpMaxSlippage=10||10||0||10||0
+InpLogLevel=1||1||0||3||0
+
+; ====== RISK MANAGEMENT ======
+InpLotMode=1||0||0||1||0
+InpFixedLots=0.01||0.01||0||0.01||0
+InpRiskPercent=0.5||0.5||0||0.5||0
+InpMaxDrawdownPct=8.0||8.0||0||8.0||0
+InpMaxDayTrades=4||4||0||4||0
+
+; ====== STOP LOSS & TAKE PROFIT ======
+InpStopLoss=300||300||0||300||0
+InpTakeProfit=450||450||0||450||0
+InpUseBreakeven=1||0||0||1||0
+InpBreakevenStart=150||150||0||150||0
+InpBreakevenOffset=20||20||0||20||0
+
+; ====== TRAILING STOP ======
+InpUseTrailing=1||0||0||1||0
+InpTrailStart=200||200||0||200||0
+InpTrailStep=100||100||0||100||0
+
+; ====== PARTIAL CLOSE ======
+InpUsePartialClose=1||0||0||1||0
+InpTP1Points=200||200||0||200||0
+InpTP1ClosePercent=50.0||50.0||0||50.0||0
+
+; ====== EMA TREND FILTER (FIXED — industry standard) ======
+InpEmaFast=50||50||0||50||0
+InpEmaSlow=200||200||0||200||0
+InpTrendStrength=1||1||0||1||0
+
+; ====== MTF CONFIRMATION (FIXED) ======
+InpUseMTF=1||0||0||1||0
+InpMTFTimeframe=16385||16385||0||16385||0
+InpMTFEmaFast=20||20||0||20||0
+InpMTFEmaSlow=50||50||0||50||0
+
+; ====== RSI FILTER (FIXED) ======
+InpRsiPeriod=14||14||0||14||0
+InpRsiBuyMin=45.0||45.0||0||45.0||0
+InpRsiBuyMax=65.0||65.0||0||65.0||0
+InpRsiSellMin=35.0||35.0||0||35.0||0
+InpRsiSellMax=55.0||55.0||0||55.0||0
+
+; ====== BREAKOUT DETECTION (FIXED) ======
+InpBreakoutLookback=15||15||0||15||0
+InpBreakoutBuffer=0.3||0.3||0||0.3||0
+InpAtrPeriod=50||50||0||50||0
+
+; ====== SESSION FILTER (FIXED) ======
+InpUseSessionFilter=1||0||0||1||0
+InpSessionStartHour=8||8||0||8||0
+InpSessionStartMin=0||0||0||0||0
+InpSessionEndHour=17||17||0||17||0
+InpSessionEndMin=0||0||0||0||0
+InpAvoidFriday=1||0||0||1||0
+InpFridayCutoffHour=14||14||0||14||0
+
+; ====== SPREAD FILTER (FIXED) ======
+InpUseSpreadFilter=1||0||0||1||0
+InpMaxSpread=25||25||0||25||0
+
+; ====== NEWS FILTER ======
+InpUseNewsFilter=1||0||0||1||0
+InpNewsTime1=
+InpNewsTime2=
+InpNewsTime3=
+InpNewsMinsBefore=30||30||0||30||0
+InpNewsMinsAfter=15||15||0||15||0
+
+; ====== DISPLAY ======
+InpShowDashboard=0||0||0||0||0
+InpSyncChartTheme=0||0||0||0||0
+InpShowAnalytics=0||0||0||0||0

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASQ Safe Scalping v1.10 — Monte Carlo Analysis | XAUUSD M5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0c0808;color:#e0dcd0;padding:20px;max-width:1200px;margin:0 auto}
+h1{font-size:22px;font-weight:500;color:#e04828;margin-bottom:4px}
+.sub{font-size:13px;color:#a09080;margin-bottom:24px}
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tab{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;background:#1c1412;border:1px solid #3c2c24;color:#a09080;transition:all .2s}
+.tab.active{background:#e04828;color:#fff;border-color:#e04828}
+.tab:hover:not(.active){background:#2c201c;color:#c0b0a0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.card{background:#1c1412;border:1px solid #3c2c24;border-radius:10px;padding:16px}
+.card h3{font-size:14px;color:#c0b0a0;margin-bottom:12px;font-weight:500}
+.stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #2c201c;font-size:13px}
+.stat:last-child{border:none}
+.stat-l{color:#a09080}
+.stat-v{font-family:'Consolas',monospace;font-weight:500}
+.green{color:#40c880}
+.red{color:#e04828}
+.yellow{color:#f5af37}
+.chart-wrap{background:#1c1412;border:1px solid #3c2c24;border-radius:10px;padding:16px;margin-bottom:16px}
+.chart-wrap h3{font-size:14px;color:#c0b0a0;margin-bottom:8px;font-weight:500}
+.chart-box{position:relative;height:280px}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.mc{background:#1c1412;border-radius:8px;padding:12px;text-align:center}
+.mc-v{font-size:20px;font-weight:500;color:#e0dcd0;font-family:'Consolas',monospace}
+.mc-l{font-size:11px;color:#806858;margin-top:2px}
+.dist-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.dist-label{width:60px;text-align:right;color:#a09080;font-family:'Consolas',monospace}
+.dist-bar{flex:1;height:16px;background:#2c201c;border-radius:3px;overflow:hidden;position:relative}
+.dist-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:4px;font-size:10px;color:#fff}
+.note{font-size:11px;color:#605048;margin-top:16px;line-height:1.5;padding:12px;background:#140e0c;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>ASQ Safe Scalping v1.10 — Monte Carlo analysis</h1>
+<div class="sub">XAUUSD M5 | 2000 iterations per scenario | 160,000 synthetic bars (mixed/bull/bear regimes) | $10,000 initial</div>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab('balanced')">Balanced (recommended)</div>
+<div class="tab" onclick="switchTab('conservative')">Conservative</div>
+<div class="tab" onclick="switchTab('aggressive')">Aggressive</div>
+</div>
+
+<div class="metrics" id="metrics"></div>
+
+<div class="grid">
+<div class="chart-wrap">
+<h3>Equity curves (sample runs)</h3>
+<div class="chart-box"><canvas id="equityChart"></canvas></div>
+</div>
+<div class="chart-wrap">
+<h3>Return distribution</h3>
+<div class="chart-box"><canvas id="returnChart"></canvas></div>
+</div>
+</div>
+
+<div class="grid">
+<div class="card" id="statsCard"></div>
+<div class="card" id="riskCard"></div>
+</div>
+
+<div class="note">
+Simulation sur données synthétiques calibrées pour XAUUSD M5 (ATR ~37pts, spread $0.15-0.28, sessions London/NY, spikes de news aléatoires). Les régimes de marché (trending haussier, baissier, ranging) sont simulés avec des transitions stochastiques. <strong>Ces résultats doivent être validés par un backtest MT5 sur données réelles de votre broker.</strong> Les conditions live (slippage, requotes, gaps) peuvent dégrader les performances de 20-40%.
+</div>
+
+<script>
+const DATA = {
+  conservative: {
+    n: 794, trades: {p5:104,p25:110,med:115,p75:127,p95:144},
+    win_rate: {p5:66.1,p25:68.4,med:71.7,p75:75.7,p95:79.5},
+    pf: {p5:0.89,p25:0.97,med:1.08,p75:1.32,p95:1.67},
+    ret: {p5:-1.29,p10:-0.93,p25:-0.37,med:0.85,mean:1.29,p75:2.68,p90:4.46,p95:5.04},
+    dd: {p5:1.16,p25:1.95,med:2.78,p75:3.41,p95:4.66},
+    sharpe: {p5:-0.82,p25:-0.24,med:0.58,p75:1.96,p95:3.66},
+    consec: {med:5,p95:13}, exp:0.73, avg_win:13.30, avg_loss:31.08,
+    profitable:64.9, ruin:0.0,
+    risk:'0.3%', day_trades:3, sl:350, tp:500, session:'08:00-16:00'
+  },
+  balanced: {
+    n: 1549, trades: {p5:160,p25:166,med:177,p75:199,p95:209},
+    win_rate: {p5:69.0,p25:71.3,med:73.9,p75:75.6,p95:79.5},
+    pf: {p5:0.94,p25:1.03,med:1.18,p75:1.27,p95:1.60},
+    ret: {p5:-1.66,p10:-1.10,p25:0.84,med:4.09,mean:3.98,p75:6.13,p90:9.45,p95:11.14},
+    dd: {p5:2.01,p25:3.06,med:3.63,p75:4.46,p95:5.72},
+    sharpe: {p5:-0.44,p25:0.21,med:1.14,p75:1.71,p95:3.34},
+    consec: {med:5,p95:6}, exp:2.34, avg_win:21.15, avg_loss:51.00,
+    profitable:80.4, ruin:0.0,
+    risk:'0.5%', day_trades:5, sl:300, tp:450, session:'07:00-17:00'
+  },
+  aggressive: {
+    n: 2000, trades: {p5:93,p25:185,med:225,p75:251,p95:276},
+    win_rate: {p5:65.6,p25:71.1,med:75.1,p75:77.7,p95:80.1},
+    pf: {p5:0.74,p25:0.98,med:1.18,p75:1.32,p95:1.51},
+    ret: {p5:-7.23,p10:-6.32,p25:-1.21,med:8.76,mean:7.21,p75:13.56,p90:18.37,p95:21.09},
+    dd: {p5:3.26,p25:3.95,med:5.90,p75:8.13,p95:8.57},
+    sharpe: {p5:-2.14,p25:-0.18,med:1.12,p75:1.94,p95:2.85},
+    consec: {med:4,p95:5}, exp:3.65, avg_win:32.31, avg_loss:83.49,
+    profitable:73.2, ruin:0.0,
+    risk:'0.8%', day_trades:8, sl:250, tp:400, session:'07:00-18:00'
+  }
+};
+
+const EQUITY = {"conservative":[[0.0,0.51,0.31,0.75,0.12,0.12,-0.19,-0.51,-0.51,-0.16,0.11,-0.3,-0.61,-0.41,0.29,-0.34,-0.34,-0.31,-0.94,-0.94,-0.34,-0.38,-0.2,-0.3,0.35,0.6,0.6,0.29,0.29,0.29,0.29,0.49,0.67,0.94,0.94,0.94,0.62,1.43,1.11,1.11,1.8,1.61,1.61,1.57,1.57,1.26,1.26,1.9,1.9,1.9,2.26,2.26,2.26,1.94,1.63,1.63,1.98,2.23,2.23,2.23,2.23,2.46,2.46,2.66,2.34,2.34,2.83,2.83,2.83,2.52,1.89,1.89,1.89,1.57,1.26,1.26,0.94,0.63,0.63,0.31,-0.0,-0.0,-0.0,-0.0,-0.0,-0.63,-0.63,-0.95,-0.95,-1.23,-1.27,-1.27,-1.01,-0.95,-0.39,-0.7,-0.7,-1.02,-1.3,-0.99],[0.0,0.0,-0.31,-0.05,-0.05,-0.37,-0.68,-0.68,-0.68,-1.28,-1.11,-1.11,-0.87,-0.87,-0.65,-0.97,-0.74,-0.74,-0.74,-0.73,-0.73,-0.73,-0.29,-0.61,-0.61,-0.61,-0.92,-1.2,-1.2,-0.85,-0.85,-1.13,-0.9,-0.9,-0.9,-0.54,-0.3,-0.62,-0.39,-0.32,-0.14,-0.45,-0.32,-0.21,-0.21,0.15,-0.16,-0.16,-0.16,0.28,0.28,0.28,-0.35,-0.12,0.14,-0.18,-0.18,-0.18,0.64,0.52,0.52,-0.11,-0.11,0.07,-0.56,0.02,0.25,0.25,0.14,0.14,0.14,0.18,-0.14,-0.14,-0.14,-0.14,-0.33,-0.5,-0.82,-0.82,-0.82,-1.13,-1.13,-1.13,-1.41,-1.73,-1.73,-1.15,-0.83,-0.83,-1.14,-0.84,-0.84,-0.84,-0.92,-0.44,-0.76,-0.19,-0.82,-0.82],[0.0,0.29,0.29,0.29,0.63,0.82,0.82,0.51,0.51,0.75,0.36,0.36,0.36,0.99,0.68,0.36,0.63,0.51,0.51,0.87,0.87,1.22,1.22,1.44,1.12,1.12,1.12,0.81,0.49,0.49,0.84,0.84,0.52,0.41,0.41,0.41,0.41,0.63,0.63,0.83,0.52,0.2,0.2,0.47,0.15,0.15,-0.16,-0.48,-0.79,-0.79,-1.39,-1.39,-1.39,-1.51,-1.51,-1.6,-1.6,-1.88,-1.67,-1.45,-1.73,-1.73,-2.01,-1.76,-2.04,-2.04,-1.84,-1.9,-2.18,-2.18,-1.76,-1.59,-1.59,-1.87,-1.7,-1.7,-1.39,-1.05,-0.84,-0.66,-0.66,-0.54,-0.38,0.07,0.07,0.07,0.33,0.53,0.78,1.04,1.23,1.23,1.23,1.23,1.6,1.28,1.55,1.24,1.24,1.24],[0.0,0.0,-0.31,-0.05,-0.36,-0.07,-0.01,0.22,0.27,0.27,-0.05,-0.36,-0.02,-0.33,-0.33,-0.33,-0.65,-0.65,-0.66,-0.97,-0.97,-0.97,-0.97,-0.97,-1.25,-1.25,-0.58,-0.14,-0.14,-0.14,-0.01,0.21,-0.1,-0.42,-0.42,-0.08,-0.39,-0.39,0.31,0.31,0.31,0.31,0.31,-0.01,-0.01,0.02,0.23,0.35,0.84,1.3,1.56,1.56,1.76,1.76,1.67,1.67,1.35,1.7,1.38,1.26,1.26,1.26,1.3,1.3,1.56,1.56,1.8,2.1,2.45,2.45,2.8,3.04,3.04,3.04,3.16,2.95,2.95,2.95,3.34,3.47,3.16,3.4,3.4,3.4,3.4,3.7,3.96,3.65,3.65,3.65,3.65,3.94,3.94,3.94,4.28,4.47,4.47,4.16,4.16,4.4],[0.0,0.0,0.0,0.0,0.37,0.05,0.05,0.0,0.0,0.0,0.0,0.45,0.45,0.69,0.69,1.16,0.85,0.85,0.85,1.1,1.1,0.79,0.79,0.47,0.16,0.33,0.93,0.61,0.61,0.98,0.67,0.67,0.35,0.04,0.25,0.25,-0.07,0.14,0.42,0.6,0.6,0.4,0.52,0.52,0.21,0.21,-0.11,-0.11,-0.11,0.3,-0.02,0.33,0.53,0.53,0.22,0.43,0.77,0.97,1.09,0.87,0.55,0.55,0.55,0.55,0.55,0.55,0.55,0.73,0.73,0.41,0.1,0.1,-0.22,-0.22,-0.18,0.08,0.08,-0.24,-0.24,-0.24,-0.15,-0.15,-0.46,-0.46,-0.78,-0.43,-0.74,-0.74,-0.53,-0.85,-0.85,-0.65,-0.53,-0.31,0.03,0.4,0.47,0.47,0.79,0.47]],"balanced":[[0.0,-0.2,0.7,1.16,1.16,2.21,2.19,2.54,2.03,2.03,2.03,2.03,1.89,2.94,2.94,2.94,2.43,2.97,3.77,3.89,3.89,5.1,5.07,5.14,5.14,5.14,4.6,4.6,5.7,5.7,5.7,6.37,5.83,5.83,5.29,4.75,4.75,5.31,6.27,5.73,5.73,5.73,5.57,5.98,5.98,4.9,5.78,6.35,6.3,5.76,5.76,6.27,7.26,7.12,7.43,7.22,7.87,7.33,7.13,7.39,7.39,7.53,7.53,7.53,7.53,6.99,6.45,6.19,6.19,5.65,5.65,5.72,6.37,5.83,6.54,7.39,7.85,7.61,8.29,7.96,8.51,7.97,7.43,6.89,6.66,7.02,7.43,6.35,5.81,5.81,5.81,4.73,4.73,4.22,5.38,5.86,5.86,5.86,6.22,6.22],[0.0,0.0,-1.02,-0.5,-1.01,-1.01,-0.66,-1.17,-1.23,-1.23,-1.04,-0.26,-0.11,-0.62,-0.24,-0.24,0.35,-0.16,0.24,0.59,1.15,1.47,1.47,1.65,1.65,1.65,2.05,2.4,3.55,4.45,4.05,4.05,4.05,4.47,4.52,4.01,3.7,3.57,3.85,3.85,3.85,4.62,4.95,5.26,5.48,5.59,5.59,5.59,5.36,5.67,5.97,5.97,5.88,6.18,5.64,6.25,6.85,5.77,5.23,5.53,5.28,4.74,3.72,4.11,4.5,4.45,4.45,5.12,5.57,6.29,5.75,6.15,5.61,5.07,4.53,5.12,4.58,4.58,5.41,5.78,5.84,6.45,6.88,6.88,5.8,5.8,6.41,6.26,6.62,7.05,6.51,6.51,6.51,6.88,6.88,6.65,6.11,6.11,5.87,5.87],[0.0,0.0,0.26,-0.25,-0.25,-0.25,-0.12,-0.22,0.15,0.01,0.01,0.3,0.9,0.39,0.89,0.38,0.38,0.8,0.29,2.4,1.89,1.38,1.88,1.92,1.41,1.41,1.82,1.27,1.27,1.05,1.05,1.05,0.87,0.36,0.36,1.33,0.96,1.24,0.73,1.12,0.53,0.02,0.02,-0.52,-0.52,-0.97,-1.16,-1.16,-1.16,-1.64,-1.57,-1.04,-1.52,-1.43,-1.01,-1.97,-2.15,-2.15,-1.75,-1.75,-2.23,-2.11,-2.59,-2.75,-2.75,-3.23,-3.23,-3.71,-3.82,-3.46,-3.46,-3.46,-3.46,-3.01,-3.01,-3.19,-2.6,-1.92,-1.68,-2.16,-1.88,-1.88,-1.51,-1.51,-1.99,-1.99,-1.78,-1.42,-1.9,-2.38,-1.81,-1.26,-1.41,-1.89,-1.89,-1.69,-2.17,-2.17,-1.75,-0.78],[0.0,0.0,0.34,-0.17,-0.68,-1.19,-1.14,-0.87,-1.38,0.3,0.51,0.51,0.51,0.51,-0.0,0.28,0.55,0.91,1.21,1.87,2.58,2.99,2.99,2.79,2.79,2.54,2.54,2.54,2.9,2.7,2.19,2.19,3.11,3.16,3.16,3.84,3.33,3.62,4.24,5.04,5.43,5.74,6.29,6.48,6.11,6.42,5.88,5.88,5.88,5.89,6.38,6.19,6.68,6.68,6.68,6.68,7.16,8.2,8.33,8.33,8.33,8.33,8.26,8.64,8.64,9.63,10.04,10.37,9.29,9.29,9.74,10.12,10.12,10.7,10.84,10.68,11.0,11.84,11.27,11.27,12.12,11.55,11.59,11.59,12.47,11.9,11.9,11.33,11.18,11.18,11.18,11.81,11.24,11.24,11.32,11.47,11.47,11.47,12.44,12.44],[0.0,0.0,0.16,-0.0,0.29,1.06,0.55,0.55,1.3,0.79,0.85,0.85,1.63,1.12,1.12,0.61,0.47,0.47,0.47,1.03,0.52,0.52,0.62,0.75,0.75,0.75,1.61,1.61,1.97,0.95,0.95,0.95,1.98,1.47,1.47,0.96,0.45,-0.06,0.35,0.13,0.13,0.13,-0.06,-0.57,-0.19,-0.19,-1.04,-0.82,-0.59,-0.59,-1.1,-1.58,-1.49,-1.49,-1.49,-1.14,-1.18,-1.66,-1.66,-0.9,-0.56,-0.56,-1.07,-0.72,-0.72,-0.64,-0.64,-0.17,0.17,0.73,1.04,1.04,1.21,1.21,1.21,1.61,2.67,3.36,4.1,3.59,3.59,3.59,3.5,4.09,3.58,3.05,3.34,3.34,3.34,3.34,4.1,4.74,4.74,5.21,5.03,5.03,5.03,4.78,5.07,5.36]],"aggressive":[[0.0,0.9,1.05,2.1,2.85,2.02,2.81,2.81,3.36,4.23,5.7,5.31,4.46,3.64,4.75,2.44,1.61,2.75,3.2,4.55,5.08,4.23,4.07,4.71,4.71,5.31,5.78,4.93,4.93,3.89,2.24,2.24,3.05,2.9,2.07,2.07,2.07,1.74,1.74,0.61,-0.99,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35,-1.35],[0.0,-0.8,-0.8,-0.27,0.42,0.42,0.08,0.08,0.08,-0.1,0.67,0.27,0.03,-0.21,0.24,1.04,1.16,1.19,0.39,1.55,-0.02,-1.15,-1.95,-0.84,-1.22,-0.18,0.23,0.0,-0.8,-0.26,0.68,0.21,0.21,-0.59,-0.86,-1.66,-3.99,-3.17,-3.94,-1.16,-1.96,-1.96,-1.61,-0.24,-1.28,-2.08,-2.85,-3.63,-2.48,-2.0,0.37,1.18,1.18,1.58,2.19,1.37,1.84,1.83,1.0,0.2,1.48,1.98,3.44,4.43,4.64,4.4,3.76,3.76,3.76,4.66,3.83,4.43,5.43,6.24,6.67,6.67,7.41,7.41,8.37,9.72,9.72,10.39,11.03,13.16,14.79,15.53,14.6,15.12,14.75,14.75,13.82,13.01,12.6,11.7,11.56,11.56,10.66,9.78,9.5,10.72],[0.0,-0.8,-1.67,-0.61,-1.41,-2.21,-2.17,-2.17,-2.49,-2.49,-2.49,-0.34,-0.36,0.23,0.23,1.11,0.87,0.47,0.94,0.94,1.44,0.64,0.24,0.24,0.25,1.26,1.73,2.16,1.9,2.34,2.34,3.14,4.15,4.64,5.18,4.33,4.33,5.04,7.01,7.01,7.01,6.22,6.67,6.67,7.65,7.65,9.01,9.99,11.07,10.68,10.31,10.31,8.97,9.8,10.31,10.31,10.31,12.35,11.45,11.45,12.09,12.13,11.23,11.23,12.36,12.36,10.56,9.68,11.24,11.73,10.83,11.61,12.26,12.95,12.05,12.05,11.15,9.38,9.38,10.34,10.49,10.14,10.79,10.48,12.28,11.38,12.89,12.89,13.54,12.64,13.6,14.36,14.36,14.92,15.52,15.52,14.59,15.0,15.33,14.4],[0.0,0.85,0.54,0.97,0.17,0.17,1.22,1.22,2.26,2.19,2.98,2.98,2.98,4.39,4.39,5.86,4.63,3.8,3.8,3.43,2.6,1.78,2.91,4.22,5.56,5.27,4.26,4.26,4.9,5.5,6.77,5.97,5.12,4.27,4.07,2.42,3.76,3.24,3.08,2.26,2.26,2.26,1.92,1.1,0.77,-0.39,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19,-1.19],[0.0,-0.1,0.77,1.01,1.01,0.2,-0.6,-1.4,-2.2,0.36,0.79,-0.16,-0.16,0.5,1.61,0.78,2.82,2.5,2.5,2.16,2.8,1.97,1.15,1.15,1.15,1.08,1.16,1.16,4.26,3.84,4.33,4.33,3.37,1.72,1.72,2.87,3.39,3.39,5.15,5.74,6.74,7.73,6.34,6.34,6.82,6.4,7.82,9.56,12.67,12.67,12.67,12.11,13.58,13.58,12.68,12.73,12.73,12.73,12.73,11.83,11.83,10.05,10.93,10.93,10.81,10.63,10.63,9.75,9.14,8.26,8.26,8.31,8.17,8.17,7.29,7.8,8.37,8.29,10.35,10.35,12.92,13.04,13.04,11.24,9.07,9.07,8.52,11.94,11.54,11.76,11.99,11.99,13.19,13.82,13.23,12.33,12.33,11.43,11.43,11.43]]};
+
+const COLORS = {
+  conservative: {main:'#3b8bd4', lines:['rgba(59,139,212,0.6)','rgba(59,139,212,0.4)','rgba(59,139,212,0.3)','rgba(59,139,212,0.2)','rgba(59,139,212,0.15)']},
+  balanced: {main:'#e04828', lines:['rgba(224,72,40,0.6)','rgba(224,72,40,0.4)','rgba(224,72,40,0.3)','rgba(224,72,40,0.2)','rgba(224,72,40,0.15)']},
+  aggressive: {main:'#f5af37', lines:['rgba(245,175,55,0.6)','rgba(245,175,55,0.4)','rgba(245,175,55,0.3)','rgba(245,175,55,0.2)','rgba(245,175,55,0.15)']}
+};
+
+let eqChart, retChart, current = 'balanced';
+
+function clr(v,good='green',bad='red',neutral=''){
+  if(typeof v==='string') v=parseFloat(v);
+  return v>0?good:v<0?bad:neutral;
+}
+
+function renderMetrics(d){
+  const m=document.getElementById('metrics');
+  m.innerHTML=`
+    <div class="mc"><div class="mc-v ${clr(d.ret.med)}">${d.ret.med>0?'+':''}${d.ret.med}%</div><div class="mc-l">Median return</div></div>
+    <div class="mc"><div class="mc-v green">${d.win_rate.med}%</div><div class="mc-l">Win rate</div></div>
+    <div class="mc"><div class="mc-v ${d.pf.med>=1.2?'green':d.pf.med>=1?'yellow':'red'}">${d.pf.med}</div><div class="mc-l">Profit factor</div></div>
+    <div class="mc"><div class="mc-v ${d.dd.med<4?'green':d.dd.med<6?'yellow':'red'}">${d.dd.med}%</div><div class="mc-l">Median max DD</div></div>
+    <div class="mc"><div class="mc-v green">${d.profitable}%</div><div class="mc-l">Profitable runs</div></div>`;
+}
+
+function renderStats(d){
+  document.getElementById('statsCard').innerHTML=`<h3>Performance distribution</h3>
+    <div class="stat"><span class="stat-l">Valid runs</span><span class="stat-v">${d.n} / 2000</span></div>
+    <div class="stat"><span class="stat-l">Trades (median)</span><span class="stat-v">${d.trades.med} [${d.trades.p25}-${d.trades.p75}]</span></div>
+    <div class="stat"><span class="stat-l">Win rate</span><span class="stat-v green">${d.win_rate.med}% [${d.win_rate.p25}-${d.win_rate.p75}]</span></div>
+    <div class="stat"><span class="stat-l">Profit factor</span><span class="stat-v ${d.pf.med>=1.2?'green':'yellow'}">${d.pf.med} [${d.pf.p25}-${d.pf.p75}]</span></div>
+    <div class="stat"><span class="stat-l">Sharpe ratio</span><span class="stat-v ${d.sharpe.med>1?'green':'yellow'}">${d.sharpe.med} [${d.sharpe.p25}-${d.sharpe.p75}]</span></div>
+    <div class="stat"><span class="stat-l">Expectancy/trade</span><span class="stat-v ${clr(d.exp)}">$${d.exp}</span></div>
+    <div class="stat"><span class="stat-l">Avg win / Avg loss</span><span class="stat-v">$${d.avg_win} / $${d.avg_loss}</span></div>`;
+
+  document.getElementById('riskCard').innerHTML=`<h3>Risk profile</h3>
+    <div class="stat"><span class="stat-l">Risk per trade</span><span class="stat-v">${d.risk}</span></div>
+    <div class="stat"><span class="stat-l">SL / TP</span><span class="stat-v">${d.sl} / ${d.tp} pts</span></div>
+    <div class="stat"><span class="stat-l">Session</span><span class="stat-v">${d.session}</span></div>
+    <div class="stat"><span class="stat-l">Max day trades</span><span class="stat-v">${d.day_trades}</span></div>
+    <div class="stat"><span class="stat-l">Max DD (median)</span><span class="stat-v ${d.dd.med<4?'green':'yellow'}">${d.dd.med}% [${d.dd.p25}-${d.dd.p75}]</span></div>
+    <div class="stat"><span class="stat-l">Max DD (p95 worst)</span><span class="stat-v red">${d.dd.p95}%</span></div>
+    <div class="stat"><span class="stat-l">Max consec. losses</span><span class="stat-v yellow">${d.consec.med} (p95: ${d.consec.p95})</span></div>
+    <div class="stat"><span class="stat-l">Risk of ruin (>20%)</span><span class="stat-v green">${d.ruin}%</span></div>`;
+}
+
+function renderEquity(name){
+  const ctx = document.getElementById('equityChart').getContext('2d');
+  if(eqChart) eqChart.destroy();
+  const curves = EQUITY[name]||[];
+  const datasets = curves.map((c,i)=>({
+    data:c, borderColor:COLORS[name].lines[i%5],
+    borderWidth:1.5, pointRadius:0, tension:0.3, fill:false
+  }));
+  eqChart = new Chart(ctx, {
+    type:'line', data:{labels:curves[0]?curves[0].map((_,i)=>i):[],datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{display:false},
+        y:{ticks:{color:'#806858',callback:v=>v+'%'},grid:{color:'#2c201c'}}
+      }
+    }
+  });
+}
+
+function renderReturn(name){
+  const ctx = document.getElementById('returnChart').getContext('2d');
+  if(retChart) retChart.destroy();
+  const d = DATA[name].ret;
+  const labels = ['p5 (worst)','p10','p25','Median','Mean','p75','p90','p95 (best)'];
+  const vals = [d.p5,d.p10,d.p25,d.med,d.mean,d.p75,d.p90,d.p95];
+  const colors = vals.map(v=>v>=0?'rgba(64,200,128,0.7)':'rgba(224,72,40,0.7)');
+  retChart = new Chart(ctx, {
+    type:'bar', data:{labels, datasets:[{data:vals,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#806858',callback:v=>v+'%'},grid:{color:'#2c201c'}},
+        y:{ticks:{color:'#a09080',font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function switchTab(name){
+  current = name;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>{if(t.textContent.toLowerCase().includes(name))t.classList.add('active');});
+  renderMetrics(DATA[name]);
+  renderStats(DATA[name]);
+  renderEquity(name);
+  renderReturn(name);
+}
+
+switchTab('balanced');
+</script>
+</body>
+</html>
